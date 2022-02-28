@@ -37,10 +37,14 @@ class DemoApplication : Application() {
 
         defaultCryptoProvider = AndroidCryptoProvider
 
-        initIPv8()
+
+        val BUILD_VERSION_CODE_S = 31
+        if (Build.VERSION.SDK_INT < BUILD_VERSION_CODE_S) {
+            initIPv8()
+        }
     }
 
-    private fun initIPv8() {
+    fun initIPv8() {
         val config = IPv8Configuration(overlays = listOf(
             createDiscoveryCommunity(),
             createTrustChainCommunity(),

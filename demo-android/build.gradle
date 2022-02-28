@@ -41,6 +41,7 @@ android {
     packagingOptions {
         exclude 'META-INF/kotlinx-coroutines-core.kotlin_module'
     }
+    ndkVersion '21.1.6352462'
 }
 
 repositories {
