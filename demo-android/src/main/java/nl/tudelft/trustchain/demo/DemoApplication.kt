@@ -131,6 +131,8 @@ class DemoApplication : Application() {
         )
     }
 
+
+
     private fun getPrivateKey(): PrivateKey {
         // Load a key from the shared preferences
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)

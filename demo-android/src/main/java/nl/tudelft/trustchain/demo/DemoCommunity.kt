@@ -1,5 +1,6 @@
 package nl.tudelft.trustchain.demo
 
+import android.util.Log
 import nl.tudelft.ipv8.IPv4Address
 import nl.tudelft.ipv8.Community
 import nl.tudelft.ipv8.Peer
@@ -13,6 +14,7 @@ import java.util.*
 class DemoCommunity : Community() {
     override val serviceId = "02313685c1912a141279f8248fc8db5899c5df5a"
 
+    private val MESSAGE_ID = 1
     val discoveredAddressesContacted: MutableMap<IPv4Address, Date> = mutableMapOf()
     val lastTrackerResponses = mutableMapOf<IPv4Address, Date>()
 
@@ -33,6 +35,23 @@ class DemoCommunity : Community() {
 
         if (peer.address in DEFAULT_ADDRESSES) {
             lastTrackerResponses[peer.address] = Date()
+        }
+    }
+
+    init {
+        messageHandlers[MESSAGE_ID] = ::onMessage
+    }
+
+    private fun onMessage(packet: Packet) {
+        val (peer, payload) = packet.getAuthPayload(MyMessage.Deserializer)
+        Log.d("DemoCommunity", peer.mid + ": " + payload.message)
+    }
+
+
+    fun broadcastGreeting() {
+        for (peer in getPeers()) {
+            val packet = serializePacket(MESSAGE_ID, MyMessage("Hello!"))
+            send(peer.address, packet)
         }
     }
 }

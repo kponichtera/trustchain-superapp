@@ -8,6 +8,7 @@ import android.os.Build
 import android.net.Uri
 import android.content.pm.PackageManager
 import android.provider.Settings
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.res.ResourcesCompat
@@ -23,6 +24,7 @@ import kotlinx.coroutines.launch
 import nl.tudelft.ipv8.android.IPv8Android
 import nl.tudelft.trustchain.demo.DemoApplication
 import nl.tudelft.trustchain.demo.DemoCommunity
+import nl.tudelft.trustchain.demo.MyMessage
 import nl.tudelft.trustchain.demo.R
 import nl.tudelft.trustchain.demo.ui.peers.AddressItem
 import nl.tudelft.trustchain.demo.ui.peers.AddressItemRenderer
@@ -74,7 +76,7 @@ class DemoActivity : AppCompatActivity() {
         recyclerView.addItemDecoration(DividerItemDecoration(this, LinearLayout.VERTICAL))
 
         loadNetworkInfo()
-        receiveGossips()
+        //receiveGossips()
     }
 
     private fun hasBluetoothPermissions(): Boolean {
@@ -143,7 +145,7 @@ class DemoActivity : AppCompatActivity() {
             .setCanceledOnTouchOutside(false)
     }
 
-
+/*
     private fun receiveGossips() {
         lifecycleScope.launchWhenStarted {
             while (isActive) {
@@ -155,7 +157,7 @@ class DemoActivity : AppCompatActivity() {
             }
         }
     }
-
+*/
     private fun loadNetworkInfo() {
         lifecycleScope.launchWhenStarted {
             while (isActive) {
@@ -194,6 +196,11 @@ class DemoActivity : AppCompatActivity() {
 
                 val items = peerItems + bluetoothAddressItems + addressItems
 
+                for (peer in peers) {
+                    Log.d("DemoCommunity", "FOUND PEER with id " + peer.mid)
+                }
+
+
                 adapter.updateItems(items)
                 txtCommunityName.text = demoCommunity.javaClass.simpleName
                 txtPeerCount.text = "${peers.size} peers"
@@ -201,8 +208,9 @@ class DemoActivity : AppCompatActivity() {
                 val textColor = ResourcesCompat.getColor(resources, textColorResId, null)
                 txtPeerCount.setTextColor(textColor)
                 imgEmpty.isVisible = items.isEmpty()
+                demoCommunity.broadcastGreeting()
 
-                delay(1000)
+                delay(2000)
             }
         }
     }
