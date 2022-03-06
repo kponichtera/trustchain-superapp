@@ -8,13 +8,13 @@ import nl.tudelft.ipv8.android.IPv8Android
 import nl.tudelft.ipv8.attestation.trustchain.TrustChainCommunity
 import nl.tudelft.ipv8.messaging.*
 import nl.tudelft.ipv8.messaging.payload.IntroductionResponsePayload
-import nl.tudelft.ipv8.messaging.payload.PuncturePayload
 import java.util.*
 
 class DemoCommunity : Community() {
     override val serviceId = "02313685c1912a141279f8248fc8db5899c5df5a"
 
-    private val MESSAGE_ID = 1
+    private val BROADCAST_TRADE_MESSAGE_ID = 1
+    private val ACCEPT_MESSAGE_ID = 2
     val discoveredAddressesContacted: MutableMap<IPv4Address, Date> = mutableMapOf()
     val lastTrackerResponses = mutableMapOf<IPv4Address, Date>()
 
@@ -39,18 +39,24 @@ class DemoCommunity : Community() {
     }
 
     init {
-        messageHandlers[MESSAGE_ID] = ::onMessage
+        messageHandlers[BROADCAST_TRADE_MESSAGE_ID] = ::onMessage
+        messageHandlers[ACCEPT_MESSAGE_ID] = ::onMessage
     }
 
     private fun onMessage(packet: Packet) {
-        val (peer, payload) = packet.getAuthPayload(MyMessage.Deserializer)
-        Log.d("DemoCommunity", peer.mid + ": " + payload.message)
+        val (peer, payload) = packet.getAuthPayload(TradeMessage.Deserializer)
+        Log.d("DemoCommunity", peer.mid + ": " + payload.offerId)
+        send(peer.address, serializePacket(ACCEPT_MESSAGE_ID, AcceptMessage(payload.offerId, peer.mid)))
     }
 
 
-    fun broadcastGreeting() {
+    fun broadcastTradeOffer(offerId: Int, amount: Double) {
         for (peer in getPeers()) {
-            val packet = serializePacket(MESSAGE_ID, MyMessage("Hello!"))
+            val packet = serializePacket(BROADCAST_TRADE_MESSAGE_ID, TradeMessage(offerId.toString(),
+                                                                    TradeConstants.BITCOIN,
+                                                                    TradeConstants.BITCOIN,
+                                                                    amount.toString(),
+                                                                    amount.toString()))
             send(peer.address, packet)
         }
     }

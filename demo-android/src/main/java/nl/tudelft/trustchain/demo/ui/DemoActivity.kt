@@ -20,11 +20,9 @@ import com.mattskala.itemadapter.ItemAdapter
 import kotlinx.android.synthetic.main.fragment_peers.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 import nl.tudelft.ipv8.android.IPv8Android
 import nl.tudelft.trustchain.demo.DemoApplication
 import nl.tudelft.trustchain.demo.DemoCommunity
-import nl.tudelft.trustchain.demo.MyMessage
 import nl.tudelft.trustchain.demo.R
 import nl.tudelft.trustchain.demo.ui.peers.AddressItem
 import nl.tudelft.trustchain.demo.ui.peers.AddressItemRenderer
@@ -145,19 +143,6 @@ class DemoActivity : AppCompatActivity() {
             .setCanceledOnTouchOutside(false)
     }
 
-/*
-    private fun receiveGossips() {
-        lifecycleScope.launchWhenStarted {
-            while (isActive) {
-                val demoCommunity = IPv8Android.getInstance().getOverlay<DemoCommunity>()!!
-                val peers = demoCommunity.getPeers()
-
-                val discoveredAddresses = demoCommunity.network
-                    .getWalkableAddresses(demoCommunity.serviceId)
-            }
-        }
-    }
-*/
     private fun loadNetworkInfo() {
         lifecycleScope.launchWhenStarted {
             while (isActive) {
@@ -208,9 +193,9 @@ class DemoActivity : AppCompatActivity() {
                 val textColor = ResourcesCompat.getColor(resources, textColorResId, null)
                 txtPeerCount.setTextColor(textColor)
                 imgEmpty.isVisible = items.isEmpty()
-                demoCommunity.broadcastGreeting()
+                demoCommunity.broadcastTradeOffer(1, 0.5)
 
-                delay(2000)
+                delay(3000)
             }
         }
     }
