@@ -12,9 +12,6 @@ import java.util.*
 
 class DemoCommunity : Community() {
     override val serviceId = "02313685c1912a141279f8248fc8db5899c5df5a"
-
-    private val BROADCAST_TRADE_MESSAGE_ID = 1
-    private val ACCEPT_MESSAGE_ID = 2
     val discoveredAddressesContacted: MutableMap<IPv4Address, Date> = mutableMapOf()
     val lastTrackerResponses = mutableMapOf<IPv4Address, Date>()
 
@@ -39,25 +36,61 @@ class DemoCommunity : Community() {
     }
 
     init {
-        messageHandlers[BROADCAST_TRADE_MESSAGE_ID] = ::onMessage
-        messageHandlers[ACCEPT_MESSAGE_ID] = ::onMessage
+        messageHandlers[Companion.BROADCAST_TRADE_MESSAGE_ID] = ::onTradeOfferMessage
+        messageHandlers[Companion.ACCEPT_MESSAGE_ID] = ::onAcceptMessage
+        messageHandlers[Companion.INITIATE_MESSAGE_ID] = ::onInitiateMessage
+        messageHandlers[Companion.COMPLETE_MESSAGE_ID] = ::onCompleteTrade
+
     }
 
-    private fun onMessage(packet: Packet) {
+    private fun onTradeOfferMessage(packet: Packet) {
         val (peer, payload) = packet.getAuthPayload(TradeMessage.Deserializer)
         Log.d("DemoCommunity", peer.mid + ": " + payload.offerId)
-        send(peer.address, serializePacket(ACCEPT_MESSAGE_ID, AcceptMessage(payload.offerId, peer.mid)))
+        // send back accept
+        send(peer.address, serializePacket(Companion.ACCEPT_MESSAGE_ID, AcceptMessage(payload.offerId, peer.mid)))
     }
 
+    private fun onAcceptMessage(packet: Packet) {
+        val (peer, payload) = packet.getAuthPayload(AcceptMessage.Deserializer)
+        val hash = "abcd"
+        val txId = "1234"
+        Log.d("DemoCommunity", peer.mid + ": got trade accept")
+        /*
+        BTC code goes here
+            choose secret
+            create swap script
+         */
+        // send initiate
+        send(peer.address, serializePacket(Companion.INITIATE_MESSAGE_ID, InitiateMessage(payload.offerId, hash, txId, peer.mid)))
+    }
+
+    private fun onInitiateMessage(packet: Packet) {
+        val (peer, payload) = packet.getAuthPayload(AcceptMessage.Deserializer)
+        /* Create and broadcast tx script */
+        send(peer.address, serializePacket(Companion.COMPLETE_MESSAGE_ID, CompleteSwapMessage(payload.offerId, peer.mid)))
+    }
+
+    private fun onCompleteTrade(packet: Packet) {
+        val (peer, payload) = packet.getAuthPayload(AcceptMessage.Deserializer)
+        // tell user that trade is complete
+    }
 
     fun broadcastTradeOffer(offerId: Int, amount: Double) {
         for (peer in getPeers()) {
-            val packet = serializePacket(BROADCAST_TRADE_MESSAGE_ID, TradeMessage(offerId.toString(),
+            val packet = serializePacket(
+                Companion.BROADCAST_TRADE_MESSAGE_ID, TradeMessage(offerId.toString(),
                                                                     TradeConstants.BITCOIN,
                                                                     TradeConstants.BITCOIN,
                                                                     amount.toString(),
                                                                     amount.toString()))
             send(peer.address, packet)
         }
+    }
+
+    companion object {
+        private const val BROADCAST_TRADE_MESSAGE_ID = 1
+        private const val ACCEPT_MESSAGE_ID = 2
+        private const val INITIATE_MESSAGE_ID = 3
+        private const val COMPLETE_MESSAGE_ID = 4
     }
 }
