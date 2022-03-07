@@ -61,18 +61,21 @@ class DemoCommunity : Community() {
             create swap script
          */
         // send initiate
+        Log.d("DemoCommunity", peer.mid + ": SENDING INITIATE")
         send(peer.address, serializePacket(Companion.INITIATE_MESSAGE_ID, InitiateMessage(payload.offerId, hash, txId, peer.mid)))
     }
 
     private fun onInitiateMessage(packet: Packet) {
         val (peer, payload) = packet.getAuthPayload(AcceptMessage.Deserializer)
         /* Create and broadcast tx script */
+        Log.d("DemoCommunity", peer.mid + ": SENDING COMPLETE MESSAGE")
         send(peer.address, serializePacket(Companion.COMPLETE_MESSAGE_ID, CompleteSwapMessage(payload.offerId, peer.mid)))
     }
 
     private fun onCompleteTrade(packet: Packet) {
         val (peer, payload) = packet.getAuthPayload(AcceptMessage.Deserializer)
         // tell user that trade is complete
+        Log.d("DemoCommunity", peer.mid + ": TRADE COMPLETED " + payload.offerId)
     }
 
     fun broadcastTradeOffer(offerId: Int, amount: Double) {
