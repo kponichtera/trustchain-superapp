@@ -40,12 +40,11 @@ class DemoCommunity : Community() {
         messageHandlers[Companion.ACCEPT_MESSAGE_ID] = ::onAcceptMessage
         messageHandlers[Companion.INITIATE_MESSAGE_ID] = ::onInitiateMessage
         messageHandlers[Companion.COMPLETE_MESSAGE_ID] = ::onCompleteTrade
-
     }
 
     private fun onTradeOfferMessage(packet: Packet) {
         val (peer, payload) = packet.getAuthPayload(TradeMessage.Deserializer)
-        Log.d("DemoCommunity", peer.mid + ": " + payload.offerId)
+        Log.d("DemoCommunity", peer.mid + ":PAYLOAD: " + payload.offerId)
         // send back accept
         send(peer.address, serializePacket(Companion.ACCEPT_MESSAGE_ID, AcceptMessage(payload.offerId, peer.mid)))
     }
@@ -54,7 +53,7 @@ class DemoCommunity : Community() {
         val (peer, payload) = packet.getAuthPayload(AcceptMessage.Deserializer)
         val hash = "abcd"
         val txId = "1234"
-        Log.d("DemoCommunity", peer.mid + ": got trade accept")
+        Log.d("DemoCommunity", peer.mid + ": got trade accept ")
         /*
         BTC code goes here
             choose secret
@@ -66,14 +65,14 @@ class DemoCommunity : Community() {
     }
 
     private fun onInitiateMessage(packet: Packet) {
-        val (peer, payload) = packet.getAuthPayload(AcceptMessage.Deserializer)
+        val (peer, payload) = packet.getAuthPayload(InitiateMessage.Deserializer)
         /* Create and broadcast tx script */
         Log.d("DemoCommunity", peer.mid + ": SENDING COMPLETE MESSAGE")
         send(peer.address, serializePacket(Companion.COMPLETE_MESSAGE_ID, CompleteSwapMessage(payload.offerId, peer.mid)))
     }
 
     private fun onCompleteTrade(packet: Packet) {
-        val (peer, payload) = packet.getAuthPayload(AcceptMessage.Deserializer)
+        val (peer, payload) = packet.getAuthPayload(CompleteSwapMessage.Deserializer)
         // tell user that trade is complete
         Log.d("DemoCommunity", peer.mid + ": TRADE COMPLETED " + payload.offerId)
     }

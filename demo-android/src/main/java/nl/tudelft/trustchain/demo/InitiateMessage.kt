@@ -13,7 +13,7 @@ class InitiateMessage(val offerId: String, val hash:String, val txId: String, va
 
     companion object Deserializer : Deserializable<InitiateMessage> {
         override fun deserialize(buffer: ByteArray, offset: Int): Pair<InitiateMessage, Int> {
-            val (offerId, hash, txId, publicKey) = buffer.decodeToString()
+            val (offerId, hash, txId, publicKey) = buffer.drop(8).toByteArray().decodeToString()
                 .split(";")
             return Pair(InitiateMessage(offerId, hash, txId, publicKey), buffer.size)
         }
