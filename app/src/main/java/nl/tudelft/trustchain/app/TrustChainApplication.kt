@@ -191,9 +191,12 @@ class TrustChainApplication : Application() {
     }
 
     private fun createAtomicSwapCommunity(): OverlayConfiguration<AtomicSwapCommunity> {
+        val settings = TrustChainSettings()
+        val driver = AndroidSqliteDriver(Database.Schema, this, "atomic-swap.db")
+        val store = TrustChainSQLiteStore(Database(driver))
         val randomWalk = RandomWalk.Factory()
         return OverlayConfiguration(
-            Overlay.Factory(AtomicSwapCommunity::class.java),
+            AtomicSwapCommunity.Factory(settings, store),
             listOf(randomWalk)
         )
     }
