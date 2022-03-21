@@ -50,31 +50,7 @@ class SwapFragment : BaseFragment(R.layout.fragment_peers) {
     private fun loadNetworkInfo() {
         lifecycleScope.launchWhenStarted {
             val atomicSwapCommunity = IPv8Android.getInstance().getOverlay<AtomicSwapCommunity>()!!
-
-            atomicSwapCommunity.registerTransactionValidator(
-                ATOMIC_SWAP_BLOCK,
-                object : TransactionValidator {
-                    override fun validate(
-                        block: TrustChainBlock,
-                        database: TrustChainStore
-                    ): ValidationResult {
-                        if (block.transaction["from_pub_key"] != null &&
-                            block.transaction["to_pub_key"] != null &&
-                            block.isProposal) {
-                            return ValidationResult.Valid
-                        } else {
-                            return ValidationResult.Invalid(listOf("Proposal must have a message"))
-                        }
-                    }
-                }
-            )
-
-            atomicSwapCommunity.registerBlockSigner(ATOMIC_SWAP_BLOCK, object : BlockSigner {
-                override fun onSignatureRequest(block: TrustChainBlock) {
-                    println("BLOCK VALIDATED, ACCPETING, PUB KEY " + block.publicKey.toString())
-                    atomicSwapCommunity.createAgreementBlock(block, mapOf<Any?, Any?>())
-                }
-            })
+            val trustChainCommunity = IPv8Android.getInstance().getOverlay<TrustChainCommunity>()!!
             while (isActive) {
                 val peers = atomicSwapCommunity.getPeers()
 
@@ -113,11 +89,10 @@ class SwapFragment : BaseFragment(R.layout.fragment_peers) {
                 for (peer in peers) {
                     Log.d("AtomicSwapCommunity", "FOUND PEER with id " + peer.mid)
                     val publicKey = peer.publicKey.keyToBin()
-                    val transaction = mapOf("from_pub_key" to atomicSwapCommunity.myPeer.mid,
+                    val transaction = mapOf("from_pub_key" to trustChainCommunity.myPeer.mid,
                                             "to_pub_key" to peer.mid)
-                    println("SENDING BLOCK, PUB KEY " + atomicSwapCommunity.myPeer.publicKey.toString())
-                    atomicSwapCommunity.createProposalBlock(ATOMIC_SWAP_BLOCK, transaction, publicKey)
-
+                    println("trustchain peer PUB KEY " + trustChainCommunity.myPeer.publicKey.toString() + " atomicswap pub key " + atomicSwapCommunity.myPeer.publicKey.toString())
+                    trustChainCommunity.createProposalBlock(ATOMIC_SWAP_BLOCK, transaction, publicKey)
                 }
 
 
@@ -130,7 +105,7 @@ class SwapFragment : BaseFragment(R.layout.fragment_peers) {
                 imgEmpty.isVisible = items.isEmpty()
                 //atomicSwapCommunity.broadcastTradeOffer(1, 0.5)
 
-                delay(3000)
+                delay(5000)
             }
         }
     }

@@ -39,6 +39,7 @@ import nl.tudelft.ipv8.util.hexToBytes
 import nl.tudelft.ipv8.util.toHex
 import nl.tudelft.trustchain.app.service.TrustChainService
 import nl.tudelft.trustchain.atomicswap.AtomicSwapCommunity
+import nl.tudelft.trustchain.atomicswap.ui.swap.SwapFragment
 import nl.tudelft.trustchain.common.DemoCommunity
 import nl.tudelft.trustchain.common.MarketCommunity
 import nl.tudelft.trustchain.common.bitcoin.WalletService
@@ -115,6 +116,37 @@ class TrustChainApplication : Application() {
         euroTokenCommunity.setTransactionRepository(tr)
 
         WalletService.createGlobalWallet(this.cacheDir ?: throw Error("CacheDir not found"))
+
+        trustchain.registerTransactionValidator(
+            SwapFragment.ATOMIC_SWAP_BLOCK,
+            object : TransactionValidator {
+                override fun validate(
+                    block: TrustChainBlock,
+                    database: TrustChainStore
+                ): ValidationResult {
+                    if (block.transaction["from_pub_key"] != null &&
+                        block.transaction["to_pub_key"] != null &&
+                        block.isProposal) {
+                        return ValidationResult.Valid
+                    } else {
+                        return ValidationResult.Invalid(listOf("Proposal must have a message"))
+                    }
+                }
+            }
+        )
+
+        trustchain.registerBlockSigner(SwapFragment.ATOMIC_SWAP_BLOCK, object : BlockSigner {
+            override fun onSignatureRequest(block: TrustChainBlock) {
+                println("BLOCK VALIDATED, ACCPETING, PUB KEY " + block.publicKey.toString())
+                trustchain.createAgreementBlock(block, mapOf<Any?, Any?>())
+            }
+        })
+
+        trustchain.addListener(SwapFragment.ATOMIC_SWAP_BLOCK, object : BlockListener {
+            override fun onBlockReceived(block: TrustChainBlock) {
+                Log.d("TRUSTCHAINDEMO", "onBlockReceived: ${block.blockId} ${block.transaction}")
+            }
+        })
 
         trustchain.registerTransactionValidator(
             BLOCK_TYPE,
