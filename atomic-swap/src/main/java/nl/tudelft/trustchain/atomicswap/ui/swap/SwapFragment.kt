@@ -90,8 +90,6 @@ class SwapFragment : BaseFragment(R.layout.fragment_peers) {
                                             AtomicSwapTrustchainConstants.TRANSACTION_OFFER_ID to 1)
                     val publicKey = peer.publicKey.keyToBin()
                     trustChainCommunity.createProposalBlock(AtomicSwapTrustchainConstants.ATOMIC_SWAP_COMPLETED_BLOCK, transaction, publicKey)
-                    println("BLOCK PROPOSAL: SENT PROPOSAL BLOCK TO PEER PUB KEY " + peer.publicKey + " PEER MID " + peer.mid)
-                    println("BLOCK PROPOSAL: MY PUB KEY " + atomicSwapCommunity.myPeer.publicKey + " MY MID " + atomicSwapCommunity.myPeer.mid)
                 }
 
 

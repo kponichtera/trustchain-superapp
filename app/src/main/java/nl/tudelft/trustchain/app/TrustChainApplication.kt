@@ -145,17 +145,11 @@ class TrustChainApplication : Application() {
             object : BlockSigner {
                 override fun onSignatureRequest(block: TrustChainBlock) {
                     val atomicSwapCommunity = IPv8Android.getInstance().getOverlay<AtomicSwapCommunity>()!!
-                    val peers = atomicSwapCommunity.getPeers()
-                    println("BLOCK SIGNER: BLOCK MY PUB KEY " + block.publicKey + " LINK PUB KEY " + block.linkPublicKey)
-                    println("BLOCK SIGNER: SIGNING PROPOSAL, MY PUB KEY " + atomicSwapCommunity.myPeer.publicKey + " MY MID " + atomicSwapCommunity.myPeer.mid)
-                    for (peer in peers)
+                    val peer = atomicSwapCommunity.getPeers().find { it.publicKey.keyToBin().contentEquals(block.publicKey) }
+                    if (peer != null)
                     {
-                        println("BLOCK SIGNER: FOUND PEER PUB KEY " + peer.publicKey + " PEER MID " + peer.mid)
-                        if (peer.publicKey.equals(block.linkPublicKey)) {
-                            trustchain.createAgreementBlock(block, mapOf<Any?, Any?>())
-                            println("BLOCK SIGNER: AGGREMENT BLOCK SENT")
-                            break
-                        }
+                        trustchain.createAgreementBlock(block, mapOf<Any?, Any?>())
+                        println("BLOCK AGREE SENT")
                     }
                 }
             }
