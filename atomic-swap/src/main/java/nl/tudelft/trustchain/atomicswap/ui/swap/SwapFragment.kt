@@ -10,12 +10,6 @@ import kotlinx.android.synthetic.main.fragment_peers.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import nl.tudelft.ipv8.android.IPv8Android
-import nl.tudelft.ipv8.attestation.trustchain.BlockSigner
-import nl.tudelft.ipv8.attestation.trustchain.TrustChainBlock
-import nl.tudelft.ipv8.attestation.trustchain.TrustChainCommunity
-import nl.tudelft.ipv8.attestation.trustchain.store.TrustChainStore
-import nl.tudelft.ipv8.attestation.trustchain.validation.TransactionValidator
-import nl.tudelft.ipv8.attestation.trustchain.validation.ValidationResult
 import nl.tudelft.trustchain.atomicswap.AtomicSwapCommunity
 import nl.tudelft.trustchain.atomicswap.R
 import nl.tudelft.trustchain.atomicswap.ui.peers.AddressItem
@@ -49,33 +43,8 @@ class SwapFragment : BaseFragment(R.layout.fragment_peers) {
 
     private fun loadNetworkInfo() {
         lifecycleScope.launchWhenStarted {
-            val atomicSwapCommunity = IPv8Android.getInstance().getOverlay<AtomicSwapCommunity>()!!
-
-            atomicSwapCommunity.registerTransactionValidator(
-                ATOMIC_SWAP_BLOCK,
-                object : TransactionValidator {
-                    override fun validate(
-                        block: TrustChainBlock,
-                        database: TrustChainStore
-                    ): ValidationResult {
-                        if (block.transaction["from_pub_key"] != null &&
-                            block.transaction["to_pub_key"] != null &&
-                            block.isProposal) {
-                            return ValidationResult.Valid
-                        } else {
-                            return ValidationResult.Invalid(listOf("Proposal must have a message"))
-                        }
-                    }
-                }
-            )
-
-            atomicSwapCommunity.registerBlockSigner(ATOMIC_SWAP_BLOCK, object : BlockSigner {
-                override fun onSignatureRequest(block: TrustChainBlock) {
-                    println("BLOCK VALIDATED, ACCPETING, PUB KEY " + block.publicKey.toString())
-                    atomicSwapCommunity.createAgreementBlock(block, mapOf<Any?, Any?>())
-                }
-            })
             while (isActive) {
+                val atomicSwapCommunity = IPv8Android.getInstance().getOverlay<AtomicSwapCommunity>()!!
                 val peers = atomicSwapCommunity.getPeers()
 
                 val discoveredAddresses = atomicSwapCommunity.network
@@ -112,12 +81,6 @@ class SwapFragment : BaseFragment(R.layout.fragment_peers) {
 
                 for (peer in peers) {
                     Log.d("AtomicSwapCommunity", "FOUND PEER with id " + peer.mid)
-                    val publicKey = peer.publicKey.keyToBin()
-                    val transaction = mapOf("from_pub_key" to atomicSwapCommunity.myPeer.mid,
-                                            "to_pub_key" to peer.mid)
-                    println("SENDING BLOCK, PUB KEY " + atomicSwapCommunity.myPeer.publicKey.toString())
-                    atomicSwapCommunity.createProposalBlock(ATOMIC_SWAP_BLOCK, transaction, publicKey)
-
                 }
 
 
@@ -128,14 +91,10 @@ class SwapFragment : BaseFragment(R.layout.fragment_peers) {
                 val textColor = ResourcesCompat.getColor(resources, textColorResId, null)
                 txtPeerCount.setTextColor(textColor)
                 imgEmpty.isVisible = items.isEmpty()
-                //atomicSwapCommunity.broadcastTradeOffer(1, 0.5)
+                atomicSwapCommunity.broadcastTradeOffer(1, 0.5)
 
                 delay(3000)
             }
         }
-    }
-
-    companion object {
-        const val ATOMIC_SWAP_BLOCK = "atomic_swap_block"
     }
 }

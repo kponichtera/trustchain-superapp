@@ -3,21 +3,12 @@ package nl.tudelft.trustchain.atomicswap
 import android.util.Log
 import nl.tudelft.ipv8.Community
 import nl.tudelft.ipv8.IPv4Address
-import nl.tudelft.ipv8.Overlay
 import nl.tudelft.ipv8.Peer
-import nl.tudelft.ipv8.attestation.trustchain.TrustChainCommunity
-import nl.tudelft.ipv8.attestation.trustchain.TrustChainCrawler
-import nl.tudelft.ipv8.attestation.trustchain.TrustChainSettings
-import nl.tudelft.ipv8.attestation.trustchain.store.TrustChainStore
 import nl.tudelft.ipv8.messaging.Packet
 import nl.tudelft.ipv8.messaging.payload.IntroductionResponsePayload
 import java.util.*
 
-class AtomicSwapCommunity(
-    settings: TrustChainSettings,
-    database: TrustChainStore,
-    crawler: TrustChainCrawler = TrustChainCrawler()
-) : TrustChainCommunity(settings, database, crawler) {
+class AtomicSwapCommunity : Community() {
     override val serviceId = "abcdefabcdefabcdefabcdefabcdef0123456789"
     val discoveredAddressesContacted: MutableMap<IPv4Address, Date> = mutableMapOf()
     val lastTrackerResponses = mutableMapOf<IPv4Address, Date>()
@@ -133,16 +124,6 @@ class AtomicSwapCommunity(
                     amount.toString(),
                     amount.toString()))
             send(peer.address, packet)
-        }
-    }
-
-    class Factory(
-        private val settings: TrustChainSettings,
-        private val database: TrustChainStore,
-        private val crawler: TrustChainCrawler = TrustChainCrawler()
-    ) : Overlay.Factory<AtomicSwapCommunity>(AtomicSwapCommunity::class.java) {
-        override fun create(): AtomicSwapCommunity {
-            return AtomicSwapCommunity(settings, database, crawler)
         }
     }
 
