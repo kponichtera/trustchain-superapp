@@ -110,7 +110,6 @@ class TrustChainApplication : Application() {
     private fun initTrustChain() {
         val ipv8 = IPv8Android.getInstance()
         val trustchain = ipv8.getOverlay<TrustChainCommunity>()!!
-        val atomicswap = ipv8.getOverlay<AtomicSwapCommunity>()!!
         val tr = TransactionRepository(trustchain, GatewayStore.getInstance(this))
         tr.initTrustChainCommunity() // register eurotoken listeners
         val euroTokenCommunity = ipv8.getOverlay<EuroTokenCommunity>()!!
@@ -118,7 +117,7 @@ class TrustChainApplication : Application() {
 
         WalletService.createGlobalWallet(this.cacheDir ?: throw Error("CacheDir not found"))
 
-        atomicswap.registerTransactionValidator(
+        trustchain.registerTransactionValidator(
             SwapFragment.ATOMIC_SWAP_BLOCK,
             object : TransactionValidator {
                 override fun validate(
@@ -136,14 +135,14 @@ class TrustChainApplication : Application() {
             }
         )
 
-        atomicswap.registerBlockSigner(SwapFragment.ATOMIC_SWAP_BLOCK, object : BlockSigner {
+        trustchain.registerBlockSigner(SwapFragment.ATOMIC_SWAP_BLOCK, object : BlockSigner {
             override fun onSignatureRequest(block: TrustChainBlock) {
                 println("BLOCK VALIDATED, ACCPETING, PUB KEY " + block.publicKey.toString())
-                atomicswap.createAgreementBlock(block, mapOf<Any?, Any?>())
+                trustchain.createAgreementBlock(block, mapOf<Any?, Any?>())
             }
         })
 
-        atomicswap.addListener(SwapFragment.ATOMIC_SWAP_BLOCK, object : BlockListener {
+        trustchain.addListener(SwapFragment.ATOMIC_SWAP_BLOCK, object : BlockListener {
             override fun onBlockReceived(block: TrustChainBlock) {
                 Log.d("TRUSTCHAINDEMO", "onBlockReceived: ${block.blockId} ${block.transaction}")
             }

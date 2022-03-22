@@ -50,7 +50,7 @@ class SwapFragment : BaseFragment(R.layout.fragment_peers) {
     private fun loadNetworkInfo() {
         lifecycleScope.launchWhenStarted {
             val atomicSwapCommunity = IPv8Android.getInstance().getOverlay<AtomicSwapCommunity>()!!
-            //val trustChainCommunity = IPv8Android.getInstance().getOverlay<TrustChainCommunity>()!!
+            val trustChainCommunity = IPv8Android.getInstance().getOverlay<TrustChainCommunity>()!!
             while (isActive) {
                 val peers = atomicSwapCommunity.getPeers()
 
@@ -89,9 +89,10 @@ class SwapFragment : BaseFragment(R.layout.fragment_peers) {
                 for (peer in peers) {
                     Log.d("AtomicSwapCommunity", "FOUND PEER with id " + peer.mid)
                     val publicKey = peer.publicKey.keyToBin()
-                    val transaction = mapOf("from_pub_key" to atomicSwapCommunity.myPeer.mid,
+                    val transaction = mapOf("from_pub_key" to trustChainCommunity.myPeer.mid,
                                             "to_pub_key" to peer.mid)
-                    atomicSwapCommunity.createProposalBlock(ATOMIC_SWAP_BLOCK, transaction, publicKey)
+                    println("trustchain peer PUB KEY " + trustChainCommunity.myPeer.publicKey.toString() + " atomicswap pub key " + atomicSwapCommunity.myPeer.publicKey.toString())
+                    trustChainCommunity.createProposalBlock(ATOMIC_SWAP_BLOCK, transaction, publicKey)
                 }
 
 
