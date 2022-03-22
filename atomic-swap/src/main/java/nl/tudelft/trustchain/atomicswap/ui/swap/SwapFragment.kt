@@ -10,7 +10,9 @@ import kotlinx.android.synthetic.main.fragment_peers.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import nl.tudelft.ipv8.android.IPv8Android
+import nl.tudelft.ipv8.attestation.trustchain.TrustChainCommunity
 import nl.tudelft.trustchain.atomicswap.AtomicSwapCommunity
+import nl.tudelft.trustchain.atomicswap.AtomicSwapTrustchainConstants
 import nl.tudelft.trustchain.atomicswap.R
 import nl.tudelft.trustchain.atomicswap.ui.peers.AddressItem
 import nl.tudelft.trustchain.atomicswap.ui.peers.PeerItem
@@ -45,6 +47,7 @@ class SwapFragment : BaseFragment(R.layout.fragment_peers) {
         lifecycleScope.launchWhenStarted {
             while (isActive) {
                 val atomicSwapCommunity = IPv8Android.getInstance().getOverlay<AtomicSwapCommunity>()!!
+                val trustChainCommunity = IPv8Android.getInstance().getOverlay<TrustChainCommunity>()!!
                 val peers = atomicSwapCommunity.getPeers()
 
                 val discoveredAddresses = atomicSwapCommunity.network
@@ -80,7 +83,15 @@ class SwapFragment : BaseFragment(R.layout.fragment_peers) {
                 val items = peerItems + bluetoothAddressItems + addressItems
 
                 for (peer in peers) {
-                    Log.d("AtomicSwapCommunity", "FOUND PEER with id " + peer.mid)
+                    val transaction = mapOf(AtomicSwapTrustchainConstants.TRANSACTION_FROM_COIN to "BTC",
+                                            AtomicSwapTrustchainConstants.TRANSACTION_TO_COIN to "BTC",
+                                            AtomicSwapTrustchainConstants.TRANSACTION_FROM_AMOUNT to 15,
+                                            AtomicSwapTrustchainConstants.TRANSACTION_TO_AMOUNT to 15,
+                                            AtomicSwapTrustchainConstants.TRANSACTION_OFFER_ID to 1)
+                    val publicKey = peer.publicKey.keyToBin()
+                    trustChainCommunity.createProposalBlock(AtomicSwapTrustchainConstants.ATOMIC_SWAP_COMPLETED_BLOCK, transaction, publicKey)
+                    println("BLOCK PROPOSAL: SENT PROPOSAL BLOCK TO PEER PUB KEY " + peer.publicKey + " PEER MID " + peer.mid)
+                    println("BLOCK PROPOSAL: MY PUB KEY " + atomicSwapCommunity.myPeer.publicKey + " MY MID " + atomicSwapCommunity.myPeer.mid)
                 }
 
 
@@ -93,7 +104,7 @@ class SwapFragment : BaseFragment(R.layout.fragment_peers) {
                 imgEmpty.isVisible = items.isEmpty()
                 atomicSwapCommunity.broadcastTradeOffer(1, 0.5)
 
-                delay(3000)
+                delay(30000)
             }
         }
     }

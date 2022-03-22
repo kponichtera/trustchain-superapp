@@ -39,6 +39,7 @@ import nl.tudelft.ipv8.util.hexToBytes
 import nl.tudelft.ipv8.util.toHex
 import nl.tudelft.trustchain.app.service.TrustChainService
 import nl.tudelft.trustchain.atomicswap.AtomicSwapCommunity
+import nl.tudelft.trustchain.atomicswap.AtomicSwapTrustchainConstants
 import nl.tudelft.trustchain.common.DemoCommunity
 import nl.tudelft.trustchain.common.MarketCommunity
 import nl.tudelft.trustchain.common.bitcoin.WalletService
@@ -115,6 +116,62 @@ class TrustChainApplication : Application() {
         euroTokenCommunity.setTransactionRepository(tr)
 
         WalletService.createGlobalWallet(this.cacheDir ?: throw Error("CacheDir not found"))
+
+        trustchain.registerTransactionValidator(
+            AtomicSwapTrustchainConstants.ATOMIC_SWAP_COMPLETED_BLOCK,
+            object : TransactionValidator
+            {
+                override fun validate(block: TrustChainBlock, database: TrustChainStore): ValidationResult
+                {
+                    if ((block.transaction[AtomicSwapTrustchainConstants.TRANSACTION_FROM_COIN] != null &&
+                            block.transaction[AtomicSwapTrustchainConstants.TRANSACTION_TO_COIN] != null &&
+                            block.transaction[AtomicSwapTrustchainConstants.TRANSACTION_FROM_AMOUNT] != null &&
+                            block.transaction[AtomicSwapTrustchainConstants.TRANSACTION_TO_AMOUNT] != null &&
+                            block.transaction[AtomicSwapTrustchainConstants.TRANSACTION_OFFER_ID] != null)
+                        || block.isAgreement)
+                    {
+                        return ValidationResult.Valid
+                    }
+                    else
+                    {
+                        return ValidationResult.Invalid(listOf("Proposal invalid"))
+                    }
+                }
+            }
+        )
+
+        trustchain.registerBlockSigner(
+            AtomicSwapTrustchainConstants.ATOMIC_SWAP_COMPLETED_BLOCK,
+            object : BlockSigner {
+                override fun onSignatureRequest(block: TrustChainBlock) {
+                    val atomicSwapCommunity = IPv8Android.getInstance().getOverlay<AtomicSwapCommunity>()!!
+                    val peers = atomicSwapCommunity.getPeers()
+                    println("BLOCK SIGNER: BLOCK MY PUB KEY " + block.publicKey + " LINK PUB KEY " + block.linkPublicKey)
+                    println("BLOCK SIGNER: SIGNING PROPOSAL, MY PUB KEY " + atomicSwapCommunity.myPeer.publicKey + " MY MID " + atomicSwapCommunity.myPeer.mid)
+                    for (peer in peers)
+                    {
+                        println("BLOCK SIGNER: FOUND PEER PUB KEY " + peer.publicKey + " PEER MID " + peer.mid)
+                        if (peer.publicKey.equals(block.linkPublicKey)) {
+                            trustchain.createAgreementBlock(block, mapOf<Any?, Any?>())
+                            println("BLOCK SIGNER: AGGREMENT BLOCK SENT")
+                            break
+                        }
+                    }
+                }
+            }
+        )
+
+        trustchain.addListener(
+            AtomicSwapTrustchainConstants.ATOMIC_SWAP_COMPLETED_BLOCK,
+            object : BlockListener {
+                override fun onBlockReceived(block: TrustChainBlock) {
+                    Log.d(
+                        "AtomicSwap",
+                        "onBlockReceived: ${block.blockId} ${block.transaction}"
+                    )
+                }
+            }
+        )
 
         trustchain.registerTransactionValidator(
             BLOCK_TYPE,

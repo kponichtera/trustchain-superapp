@@ -8,6 +8,15 @@ import nl.tudelft.ipv8.messaging.Packet
 import nl.tudelft.ipv8.messaging.payload.IntroductionResponsePayload
 import java.util.*
 
+object AtomicSwapTrustchainConstants {
+    const val ATOMIC_SWAP_COMPLETED_BLOCK = "atomic_swap_completed_block"
+    const val TRANSACTION_FROM_COIN = "from_coin"
+    const val TRANSACTION_TO_COIN = "to_coin"
+    const val TRANSACTION_FROM_AMOUNT = "from_amount"
+    const val TRANSACTION_TO_AMOUNT = "to_amount"
+    const val TRANSACTION_OFFER_ID = "offer_id"
+}
+
 class AtomicSwapCommunity : Community() {
     override val serviceId = "abcdefabcdefabcdefabcdefabcdef0123456789"
     val discoveredAddressesContacted: MutableMap<IPv4Address, Date> = mutableMapOf()
