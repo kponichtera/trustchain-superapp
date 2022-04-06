@@ -372,11 +372,11 @@ class AtomicSwapActivity : BaseActivity() {
                     WalletHolder.ethSwap.claimSwap(secret)
                     Log.d(LOG, "Bob claimed Ethereum. From a secret from bitcoin.")
                 }
-                /* add this trade to the UI list of completed trades and remove from available trades */
-                tradeOffers.remove(tradeOffers.first { it.first.id == offerId.toLong() })
+
+                val tradeOffer = tradeOffers.first { it.first.id == offerId.toLong() }
+                tradeOffer.first.status = TradeOfferStatus.COMPLETED
                 updateTradeOffersAdapter()
                 atomicSwapCommunity.sendRemoveTradeMessage(trade.id.toString())
-
 
             } catch (e: Exception) {
                 Log.d(LOG, e.stackTraceToString())
