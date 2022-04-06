@@ -1,7 +1,6 @@
 package nl.tudelft.trustchain.atomicswap.swap
 
-import nl.tudelft.ipv8.util.sha256
-import org.bitcoinj.core.Address
+import nl.tudelft.trustchain.atomicswap.R
 import org.bitcoinj.core.Sha256Hash
 import org.bitcoinj.wallet.KeyChain
 import kotlin.random.Random
@@ -81,17 +80,17 @@ data class Trade(
 
 }
 
-enum class Currency{
-    BTC(),
-    ETH();
+enum class Currency(val currencyCodeStringResourceId: Int) {
+    BTC(R.string.currency_code_bitcoin),
+    ETH(R.string.currency_code_ethereum);
 
-   companion object {
-       fun fromString(coin: String): Currency {
-           return when(coin.toLowerCase()){
-               "btc" -> BTC
-               "eth" -> ETH
-               else -> error("Currency not supported")
-           }
-       }
-   }
+    companion object {
+        fun fromString(coin: String): Currency {
+            return when (coin.toLowerCase()) {
+                "btc" -> BTC
+                "eth" -> ETH
+                else -> error("Currency not supported")
+            }
+        }
+    }
 }

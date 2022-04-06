@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.lifecycleScope
+import com.mattskala.itemadapter.ItemAdapter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import nl.tudelft.ipv8.Peer
@@ -14,7 +15,10 @@ import nl.tudelft.ipv8.util.toHex
 import nl.tudelft.trustchain.atomicswap.swap.Currency
 import nl.tudelft.trustchain.atomicswap.swap.Trade
 import nl.tudelft.trustchain.atomicswap.swap.WalletHolder
+import nl.tudelft.trustchain.atomicswap.ui.enums.TradeOfferStatus
 import nl.tudelft.trustchain.atomicswap.ui.swap.LOG
+import nl.tudelft.trustchain.atomicswap.ui.tradeoffers.list.TradeOfferItem
+import nl.tudelft.trustchain.atomicswap.ui.tradeoffers.list.TradeOfferItemRenderer
 import nl.tudelft.trustchain.common.BaseActivity
 import org.bitcoinj.core.Transaction
 import org.bitcoinj.params.RegTestParams
@@ -22,10 +26,14 @@ import org.bitcoinj.script.ScriptBuilder
 
 class AtomicSwapActivity : BaseActivity() {
 
+    private var _tradeOffersAdapter: ItemAdapter? = null
+
     override val navigationGraph get() = R.navigation.atomic_swap_navigation_graph
     override val bottomNavigationMenu get() = R.menu.atomic_swap_menu
 
     private val atomicSwapCommunity = IPv8Android.getInstance().getOverlay<AtomicSwapCommunity>()!!
+
+    val tradeOffersAdapter get() = _tradeOffersAdapter!!
 
     var trades = mutableListOf<Trade>()
     var tradeOffers = mutableListOf<Pair<Trade, Peer>>()
@@ -33,6 +41,29 @@ class AtomicSwapActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         configureAtomicSwapCallbacks()
+        initializeTradesAdapter()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        _tradeOffersAdapter = null
+    }
+
+    fun refreshTradeOffers() {
+        // TODO: implement fetching already created trades
+    }
+
+    private fun updateTradeOffersAdapter() {
+        val openTrades =
+            tradeOffers.map { TradeOfferItem.fromTrade(it.first, TradeOfferStatus.OPEN) }
+        tradeOffersAdapter.updateItems(openTrades)
+    }
+
+    private fun initializeTradesAdapter() {
+        _tradeOffersAdapter = ItemAdapter()
+
+        val renderer = TradeOfferItemRenderer(this)
+        tradeOffersAdapter.registerRenderer(renderer)
     }
 
     private fun configureAtomicSwapCallbacks() {
@@ -47,6 +78,7 @@ class AtomicSwapActivity : BaseActivity() {
                     trade.fromAmount
                 )
                 tradeOffers.add(Pair(newTrade, peer))
+                updateTradeOffersAdapter()
             } catch (e: Exception) {
                 Log.d(LOG, e.stackTraceToString())
             }
@@ -337,6 +369,7 @@ class AtomicSwapActivity : BaseActivity() {
                 }
                 /* add this trade to the UI list of completed trades and remove from available trades */
                 tradeOffers.remove(tradeOffers.first { it.first.id == offerId.toLong() })
+                updateTradeOffersAdapter()
                 atomicSwapCommunity.sendRemoveTradeMessage(trade.id.toString())
 
 
@@ -363,6 +396,7 @@ class AtomicSwapActivity : BaseActivity() {
             try {
                 val trade = tradeOffers.first { it.first.id == removeMessage.offerId.toLong() }
                 tradeOffers.remove(trade)
+                updateTradeOffersAdapter()
             } catch (e: Exception) {
                 Log.d(LOG, e.stackTraceToString())
             }
