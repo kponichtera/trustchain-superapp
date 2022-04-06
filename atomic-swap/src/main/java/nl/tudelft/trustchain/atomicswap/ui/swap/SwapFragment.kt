@@ -16,6 +16,7 @@ import nl.tudelft.trustchain.atomicswap.R
 import nl.tudelft.trustchain.atomicswap.databinding.FragmentAtomicSwapBinding
 import nl.tudelft.trustchain.atomicswap.swap.Currency
 import nl.tudelft.trustchain.atomicswap.swap.Trade
+import nl.tudelft.trustchain.atomicswap.ui.enums.TradeOfferStatus
 import nl.tudelft.trustchain.common.ui.BaseFragment
 import java.math.BigDecimal
 import kotlin.random.Random
@@ -106,7 +107,14 @@ class SwapFragment : BaseFragment(R.layout.fragment_atomic_swap) {
         val fromCurrencyAmount = binding.fromCurrencyInput.text.toString()
         val toCurrencyAmount = binding.toCurrencyInput.text.toString()
 
-        val trade = Trade(Random.nextLong(), Currency.fromString(fromCurrency.toString()), fromCurrencyAmount, Currency.fromString(toCurrency.toString()), toCurrencyAmount)
+        val trade = Trade(
+            Random.nextLong(),
+            TradeOfferStatus.OPEN,
+            Currency.fromString(fromCurrency.toString()),
+            fromCurrencyAmount,
+            Currency.fromString(toCurrency.toString()),
+            toCurrencyAmount
+        )
         (activity as AtomicSwapActivity).trades.add(trade)
         atomicSwapCommunity.broadcastTradeOffer(
             trade.id.toString(),
@@ -115,7 +123,7 @@ class SwapFragment : BaseFragment(R.layout.fragment_atomic_swap) {
             fromCurrencyAmount,
             toCurrencyAmount
         )
-        Log.d(LOG,"Alice broadcasted a trade offer with id ${trade.id.toString()}")
+        Log.d(LOG, "Alice broadcasted a trade offer with id ${trade.id.toString()}")
 
         val input = "$fromCurrencyAmount $fromCurrency -> $toCurrencyAmount $toCurrency"
         Toast.makeText(requireContext(), input, Toast.LENGTH_SHORT).show()

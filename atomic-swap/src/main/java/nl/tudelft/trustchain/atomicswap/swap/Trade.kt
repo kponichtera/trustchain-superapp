@@ -1,6 +1,7 @@
 package nl.tudelft.trustchain.atomicswap.swap
 
 import nl.tudelft.trustchain.atomicswap.R
+import nl.tudelft.trustchain.atomicswap.ui.enums.TradeOfferStatus
 import org.bitcoinj.core.Sha256Hash
 import org.bitcoinj.wallet.KeyChain
 import kotlin.random.Random
@@ -16,9 +17,10 @@ import kotlin.random.Random
  */
 data class Trade(
     val id: Long,
-    val myCoin : Currency,
-    val myAmount : String,
-    val counterpartyCoin : Currency,
+    var status: TradeOfferStatus,
+    val myCoin: Currency,
+    val myAmount: String,
+    val counterpartyCoin: Currency,
     val counterpartyAmount: String,
 ) {
 

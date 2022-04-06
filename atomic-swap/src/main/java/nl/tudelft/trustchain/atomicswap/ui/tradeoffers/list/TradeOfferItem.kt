@@ -8,7 +8,7 @@ import java.math.BigDecimal
 
 class TradeOfferItem(
     val id: Long,
-    val status: TradeOfferStatus,
+    var status: TradeOfferStatus,
     val fromCurrency: Currency,
     val toCurrency: Currency,
     val fromCurrencyAmount: BigDecimal,
@@ -24,10 +24,10 @@ class TradeOfferItem(
     }
 
     companion object {
-        fun fromTrade(trade: Trade, status: TradeOfferStatus): TradeOfferItem {
+        fun fromTrade(trade: Trade): TradeOfferItem {
             return TradeOfferItem(
                 trade.id,
-                status,
+                trade.status,
                 trade.myCoin,
                 trade.counterpartyCoin,
                 BigDecimal(trade.myAmount),

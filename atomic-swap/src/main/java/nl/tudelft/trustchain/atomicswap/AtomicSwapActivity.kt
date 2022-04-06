@@ -50,19 +50,22 @@ class AtomicSwapActivity : BaseActivity() {
     }
 
     fun refreshTradeOffers() {
+        Log.i(LOG, "Refreshing trades")
         // TODO: implement fetching already created trades
     }
 
     private fun updateTradeOffersAdapter() {
-        val openTrades =
-            tradeOffers.map { TradeOfferItem.fromTrade(it.first, TradeOfferStatus.OPEN) }
+        val openTrades = tradeOffers.map { TradeOfferItem.fromTrade(it.first) }
         tradeOffersAdapter.updateItems(openTrades)
     }
 
     private fun initializeTradesAdapter() {
         _tradeOffersAdapter = ItemAdapter()
 
-        val renderer = TradeOfferItemRenderer(this)
+        val renderer = TradeOfferItemRenderer(
+            context = this,
+            acceptCallback = { acceptTrade(it) }
+        )
         tradeOffersAdapter.registerRenderer(renderer)
     }
 
@@ -70,8 +73,10 @@ class AtomicSwapActivity : BaseActivity() {
         // BOB RECEIVES A TRADE OFFER AND ACCEPTS IT
         atomicSwapCommunity.setOnTrade { trade, peer ->
             try {
+                Log.i(LOG, "Received new trade offer: " + trade.offerId)
                 val newTrade = Trade(
                     trade.offerId.toLong(),
+                    TradeOfferStatus.OPEN,
                     Currency.fromString(trade.toCoin),
                     trade.toAmount,
                     Currency.fromString(trade.fromCoin),
@@ -404,7 +409,11 @@ class AtomicSwapActivity : BaseActivity() {
     }
 
     /* call this when user accepts trade offer from Trade Offers screen */
-    private fun acceptTrade(trade: Trade, peer: Peer) {
+    private fun acceptTrade(tradeOfferItem: TradeOfferItem) {
+        val tradeOffer = tradeOffers.first { it.first.id == tradeOfferItem.id }
+        val trade = tradeOffer.first
+        val peer = tradeOffer.second
+
         lifecycleScope.launch(Dispatchers.Main) {
             val alertDialogBuilder = AlertDialog.Builder(this@AtomicSwapActivity)
             alertDialogBuilder.setTitle("Received Trade Offer")
@@ -412,6 +421,7 @@ class AtomicSwapActivity : BaseActivity() {
             alertDialogBuilder.setPositiveButton("Accept") { _, _ ->
 
                 val newTrade = trade.copy()
+                newTrade.status = TradeOfferStatus.IN_PROGRESS
                 trades.add(newTrade)
 
                 newTrade.setOnTrade()
@@ -428,6 +438,9 @@ class AtomicSwapActivity : BaseActivity() {
 
             alertDialogBuilder.setCancelable(true)
             alertDialogBuilder.show()
+
+            trade.status = TradeOfferStatus.IN_PROGRESS
+            updateTradeOffersAdapter()
         }
     }
 
