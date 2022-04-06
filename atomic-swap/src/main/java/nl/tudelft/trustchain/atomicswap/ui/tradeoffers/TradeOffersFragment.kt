@@ -19,6 +19,7 @@ import java.math.BigDecimal
 
 class TradeOffersFragment : BaseFragment(R.layout.fragment_atomic_trade_offers) {
 
+
     private var _binding: FragmentAtomicTradeOffersBinding? = null
     private var _tradeOffersAdapter: ItemAdapter? = null
 
@@ -27,6 +28,7 @@ class TradeOffersFragment : BaseFragment(R.layout.fragment_atomic_trade_offers) 
     private val binding get() = _binding!!
 
     private val tradeOffersAdapter get() = _tradeOffersAdapter!!
+
 
     override fun onCreateView(
         inflater: LayoutInflater,
