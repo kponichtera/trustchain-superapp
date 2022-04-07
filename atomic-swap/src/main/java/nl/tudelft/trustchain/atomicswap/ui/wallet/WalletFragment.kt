@@ -71,7 +71,7 @@ class WalletFragment : BaseFragment(R.layout.fragment_atomic_wallet), WalletChan
 //                            DefaultGasProvider()
 //                        ).send()
 //                        Log.d("ETHLOG","contract address : ${contract.contractAddress}")
-                        WalletHolder.ethSwap = EthereumSwap(ethereumWallet.web3j, ethereumWallet.credentials,"0x58b2563d596da6ebbc6031d581c57baef6b9cbab") //todo add address to some env
+                        WalletHolder.ethSwap = EthereumSwap(ethereumWallet.web3j, ethereumWallet.credentials,"0x96cdc87d827e5c3294e6ff9ff7122f2ccf576f2a") //todo add address to some env
                         break
                     }catch (e: Exception){
                         Log.d("ETHLOG", e.toString())
