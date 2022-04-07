@@ -285,6 +285,10 @@ class AtomicSwapActivity : BaseActivity() {
                 )
                 Log.d(LOG, "Bob's transaction is confirmed")
 
+                val tradeOffer = tradeOffers.first { it.first.id == trade.id }
+                tradeOffer.first.status = TradeOfferStatus.COMPLETED
+                updateTradeOffersAdapter()
+                atomicSwapCommunity.sendRemoveTradeMessage(trade.id.toString())
 
             } catch (e: Exception) {
                 Log.d(LOG, e.stackTraceToString())
