@@ -21,12 +21,18 @@ class TradeOfferItemRenderer(val context: Context, val acceptCallback: (TradeOff
 
         binding.status.setText(item.status.stringResourceId)
 
-        if (item.status == TradeOfferStatus.OPEN) {
-            binding.acceptButton.setOnClickListener {
-                acceptCallback(item)
+        when (item.status) {
+            TradeOfferStatus.OPEN -> {
+                binding.acceptButton.setOnClickListener {
+                    acceptCallback(item)
+                }
             }
-        } else {
-            binding.acceptButton.visibility = View.GONE
+            TradeOfferStatus.OPEN_BY_CURRENT_USER -> {
+                binding.acceptButton.isEnabled = false
+            }
+            else -> {
+                binding.acceptButton.visibility = View.GONE
+            }
         }
     }
 

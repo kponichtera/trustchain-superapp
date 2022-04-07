@@ -109,7 +109,7 @@ class SwapFragment : BaseFragment(R.layout.fragment_atomic_swap) {
 
         val trade = Trade(
             Random.nextLong(),
-            TradeOfferStatus.OPEN,
+            TradeOfferStatus.OPEN_BY_CURRENT_USER,
             Currency.fromString(fromCurrency.toString()),
             fromCurrencyAmount,
             Currency.fromString(toCurrency.toString()),
