@@ -338,8 +338,8 @@ class AtomicSwapActivity : BaseActivity() {
                     Log.d(LOG, "Alice created a claim transaction")
                     Log.d(LOG, transaction.toString())
                     val tchain_trans = mapOf(
-                        AtomicSwapTrustchainConstants.TRANSACTION_FROM_COIN to trade.myCoin,
-                        AtomicSwapTrustchainConstants.TRANSACTION_TO_COIN to trade.counterpartyCoin,
+                        AtomicSwapTrustchainConstants.TRANSACTION_FROM_COIN to trade.myCoin.toString(),
+                        AtomicSwapTrustchainConstants.TRANSACTION_TO_COIN to trade.counterpartyCoin.toString(),
                         AtomicSwapTrustchainConstants.TRANSACTION_FROM_AMOUNT to trade.myAmount,
                         AtomicSwapTrustchainConstants.TRANSACTION_TO_AMOUNT to trade.counterpartyAmount,
                         AtomicSwapTrustchainConstants.TRANSACTION_OFFER_ID to trade.id
