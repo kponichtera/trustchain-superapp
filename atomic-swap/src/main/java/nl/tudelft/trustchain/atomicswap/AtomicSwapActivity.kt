@@ -55,8 +55,10 @@ class AtomicSwapActivity : BaseActivity() {
     }
 
     fun updateTradeOffersAdapter() {
-        val openTrades = tradeOffers.map { TradeOfferItem.fromTrade(it.first) }
-        tradeOffersAdapter.updateItems(openTrades)
+        lifecycleScope.launch(Dispatchers.Main) {
+            val openTrades = tradeOffers.map { TradeOfferItem.fromTrade(it.first) }
+            tradeOffersAdapter.updateItems(openTrades)
+        }
     }
 
     private fun initializeTradesAdapter() {
