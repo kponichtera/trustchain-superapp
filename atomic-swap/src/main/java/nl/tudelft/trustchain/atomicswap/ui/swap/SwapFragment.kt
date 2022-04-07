@@ -116,6 +116,8 @@ class SwapFragment : BaseFragment(R.layout.fragment_atomic_swap) {
             toCurrencyAmount
         )
         (activity as AtomicSwapActivity).trades.add(trade)
+        (activity as AtomicSwapActivity).tradeOffers.add(Pair(trade, atomicSwapCommunity.myPeer))
+        (activity as AtomicSwapActivity).updateTradeOffersAdapter()
         atomicSwapCommunity.broadcastTradeOffer(
             trade.id.toString(),
             fromCurrency.toString(),
@@ -124,6 +126,7 @@ class SwapFragment : BaseFragment(R.layout.fragment_atomic_swap) {
             toCurrencyAmount
         )
         Log.d(LOG, "Alice broadcasted a trade offer with id ${trade.id.toString()}")
+        Log.d(LOG, "MY PEER ID ${atomicSwapCommunity.myPeer.mid}")
 
         val input = "$fromCurrencyAmount $fromCurrency -> $toCurrencyAmount $toCurrency"
         Toast.makeText(requireContext(), input, Toast.LENGTH_SHORT).show()

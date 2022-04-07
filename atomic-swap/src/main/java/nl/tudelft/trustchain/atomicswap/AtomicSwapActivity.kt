@@ -54,7 +54,7 @@ class AtomicSwapActivity : BaseActivity() {
         // TODO: implement fetching already created trades
     }
 
-    private fun updateTradeOffersAdapter() {
+    fun updateTradeOffersAdapter() {
         val openTrades = tradeOffers.map { TradeOfferItem.fromTrade(it.first) }
         tradeOffersAdapter.updateItems(openTrades)
     }
@@ -94,6 +94,11 @@ class AtomicSwapActivity : BaseActivity() {
             try {
                 val trade = trades.first { it.id == accept.offerId.toLong() }
                 trade.setOnAccept(accept.btcPubKey.hexToBytes(), accept.ethAddress)
+                Log.d(LOG, "RECEIVED ACCEPT FROM ${peer.mid}")
+
+                val tradeOfferItem = tradeOffers.first { it.first.id == trade.id }
+                tradeOfferItem.first.status = TradeOfferStatus.IN_PROGRESS
+                updateTradeOffersAdapter()
 
                 if (trade.myCoin == Currency.ETH) {
                     val txid = WalletHolder.ethSwap.createSwap(trade)
@@ -424,8 +429,9 @@ class AtomicSwapActivity : BaseActivity() {
             alertDialogBuilder.setMessage(trade.toString())
             alertDialogBuilder.setPositiveButton("Accept") { _, _ ->
 
+                trade.status = TradeOfferStatus.IN_PROGRESS
+                updateTradeOffersAdapter()
                 val newTrade = trade.copy()
-                newTrade.status = TradeOfferStatus.IN_PROGRESS
                 trades.add(newTrade)
 
                 newTrade.setOnTrade()
@@ -438,13 +444,12 @@ class AtomicSwapActivity : BaseActivity() {
                     myAddress
                 )
                 Log.d(LOG, "Bob accepted a trade offer from Alice")
+                Log.d(LOG, "SENDING ACCEPT TO PEER ${peer.mid}")
             }
 
             alertDialogBuilder.setCancelable(true)
             alertDialogBuilder.show()
 
-            trade.status = TradeOfferStatus.IN_PROGRESS
-            updateTradeOffersAdapter()
         }
     }
 
