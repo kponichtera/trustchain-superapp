@@ -404,12 +404,18 @@ class AtomicSwapActivity : BaseActivity() {
         WalletHolder.swapTransactionConfidenceListener.setOnClaimedConfirmed {
             Log.d(LOG, "The claim transaction is confirmed")
             lifecycleScope.launch(Dispatchers.Main) {
+                val offerId = it.offerId
 
                 val alertDialogBuilder = AlertDialog.Builder(this@AtomicSwapActivity)
                 alertDialogBuilder.setTitle("The Swap is complete")
-                alertDialogBuilder.setMessage(it.offerId.toString())
+                alertDialogBuilder.setMessage(offerId)
                 alertDialogBuilder.setCancelable(true)
                 alertDialogBuilder.show()
+
+                val tradeOffer = tradeOffers.first { it.first.id == offerId.toLong() }
+                tradeOffer.first.status = TradeOfferStatus.COMPLETED
+                updateTradeOffersAdapter()
+                atomicSwapCommunity.sendRemoveTradeMessage(offerId)
             }
         }
 
