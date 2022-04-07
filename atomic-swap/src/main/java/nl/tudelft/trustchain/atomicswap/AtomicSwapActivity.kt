@@ -353,6 +353,11 @@ class AtomicSwapActivity : BaseActivity() {
                     Log.d(LOG, "Alice created a trustchain proposal block")
                 }
 
+                val tradeOffer = tradeOffers.first { it.first.id == trade.id }
+                tradeOffer.first.status = TradeOfferStatus.COMPLETED
+                updateTradeOffersAdapter()
+                atomicSwapCommunity.sendRemoveTradeMessage(trade.id.toString())
+
             } catch (e: Exception) {
                 Log.d(LOG, e.stackTraceToString())
             }
