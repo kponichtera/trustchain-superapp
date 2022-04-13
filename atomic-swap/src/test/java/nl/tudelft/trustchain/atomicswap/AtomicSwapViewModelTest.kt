@@ -5,6 +5,7 @@ import nl.tudelft.ipv8.keyvault.Key
 import nl.tudelft.ipv8.keyvault.PublicKey
 import nl.tudelft.trustchain.atomicswap.messages.TradeMessage
 import nl.tudelft.trustchain.atomicswap.swap.Currency
+import nl.tudelft.trustchain.atomicswap.swap.FakeWalletHolder
 import nl.tudelft.trustchain.atomicswap.swap.Trade
 import nl.tudelft.trustchain.atomicswap.ui.enums.TradeOfferStatus
 import org.junit.Assert.assertEquals
@@ -45,7 +46,7 @@ class FakeKey:Key{
 
 class AtomicSwapViewModelTest() {
 
-    val viewModel = AtomicSwapViewModel(FakeSender())
+    val viewModel = AtomicSwapViewModel(FakeSender(), FakeWalletHolder)
     val peer: Peer = Peer(FakeKey())
 
     @Test

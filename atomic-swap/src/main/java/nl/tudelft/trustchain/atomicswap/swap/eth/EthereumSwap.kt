@@ -19,12 +19,21 @@ import org.web3j.utils.Convert
 import java.math.BigInteger
 
 
+interface EthereumSwapI {
+    fun createSwap(
+        trade: Trade
+    ): String
+    fun getSwap(hash: ByteArray): AtomicSwapContract.Swap
+    fun setOnClaimed(hash: ByteArray,cb : ClaimCallback)
+    fun claimSwap(secret: ByteArray): TransactionReceipt
+}
+
 @SuppressLint("CheckResult")
 class EthereumSwap(
     web3j: Web3j,
     val credentials: Credentials,
     contractAddress : String
-) {
+): EthereumSwapI {
 
 
 
@@ -50,12 +59,12 @@ class EthereumSwap(
     /**
      * Called when the swap with this hash is claimed.
      */
-    fun setOnClaimed(hash: ByteArray,cb : ClaimCallback){
+    override fun setOnClaimed(hash: ByteArray,cb : ClaimCallback){
         // bytearrays cannot be used as keys in a map
         claimCallbacks[hash.toHex()]  = cb
     }
 
-    fun createSwap(
+    override fun createSwap(
         trade: Trade
     ): String{
         val counterpartyAddress = trade.counterpartyAddress ?: error("Counterparty ethereum address not set, we don't know who we are trading with")
@@ -90,7 +99,7 @@ class EthereumSwap(
     /**
      * query the contract for the swap info of the given hash.
      */
-    fun getSwap(hash: ByteArray): AtomicSwapContract.Swap {
+    override fun getSwap(hash: ByteArray): AtomicSwapContract.Swap {
         return swapContract.getSwap(hash)
             .send()
     }
@@ -100,7 +109,7 @@ class EthereumSwap(
      * that the hash and secret value correspond to each other.
      * @param secret: The secret needed to claim the swap.
      */
-    fun claimSwap(secret: ByteArray): TransactionReceipt {
+    override fun claimSwap(secret: ByteArray): TransactionReceipt {
         Log.d(LOG,"CLaiming eht with secret : ${secret.toHex()}")
         require(getSwap(sha256(secret)).recipient == credentials.address){
             Log.d(LOG,"Cannot claim swap.")

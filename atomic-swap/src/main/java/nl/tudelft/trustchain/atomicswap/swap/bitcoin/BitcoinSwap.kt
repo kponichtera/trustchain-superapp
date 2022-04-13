@@ -11,10 +11,16 @@ import org.bitcoinj.script.ScriptBuilder
 import org.bitcoinj.script.ScriptOpCodes
 import org.bitcoinj.wallet.SendRequest
 
+
+interface BitcoinSwapI {
+    fun createSwapTransaction(trade: Trade): Pair<Transaction,Script>
+    fun createClaimTransaction(trade: Trade): Transaction
+}
+
 class BitcoinSwap(
     private var relativeLock: Int = 6,
     private var networkParams: NetworkParameters = RegTestParams()
-) {
+): BitcoinSwapI {
 
 
     /**
@@ -61,7 +67,7 @@ class BitcoinSwap(
      * Creates the transaction for initiating the swap process.
      * @return A pair of the transaction to be broadcast and the pubKey script
      */
-    fun createSwapTransaction(trade: Trade): Pair<Transaction,Script> {
+    override fun createSwapTransaction(trade: Trade): Pair<Transaction,Script> {
 
         // extract the needed fields from the Trade object which should have been initialized at this point
         val myPubKey = trade.myPubKey
@@ -101,7 +107,7 @@ class BitcoinSwap(
      * Creates the transaction that claims the money from the Atomic Swap transaction
      * @return the transaction
      */
-    fun createClaimTransaction(trade: Trade): Transaction {
+    override fun createClaimTransaction(trade: Trade): Transaction {
 
         // extract the needed fields from the Trade object which should have been initialized at this point
         val myPubKey = trade.myPubKey

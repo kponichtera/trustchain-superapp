@@ -30,7 +30,7 @@ class AtomicSwapActivity : BaseActivity() {
     val tradeOffersAdapter get() = _tradeOffersAdapter!!
 
     val model: AtomicSwapViewModel by viewModels {
-        AtomicSwapViewModelFactory(atomicSwapCommunity)
+        AtomicSwapViewModelFactory(atomicSwapCommunity, WalletHolder)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

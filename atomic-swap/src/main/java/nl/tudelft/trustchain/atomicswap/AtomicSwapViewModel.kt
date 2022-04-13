@@ -13,14 +13,14 @@ import nl.tudelft.trustchain.atomicswap.messages.InitiateMessage
 import nl.tudelft.trustchain.atomicswap.messages.TradeMessage
 import nl.tudelft.trustchain.atomicswap.swap.Currency
 import nl.tudelft.trustchain.atomicswap.swap.Trade
-import nl.tudelft.trustchain.atomicswap.swap.WalletHolder
+import nl.tudelft.trustchain.atomicswap.swap.WalletAPI
 import nl.tudelft.trustchain.atomicswap.ui.enums.TradeOfferStatus
 import nl.tudelft.trustchain.atomicswap.ui.swap.LOG
 import org.bitcoinj.core.Transaction
 import org.bitcoinj.params.RegTestParams
 import org.bitcoinj.script.ScriptBuilder
 
-class AtomicSwapViewModel(val sender: MessageSender) : ViewModel() {
+class AtomicSwapViewModel(val sender: MessageSender, val walletApi: WalletAPI) : ViewModel() {
 
     var trades = mutableListOf<Trade>()
     var tradeOffers = mutableListOf<Pair<Trade, Peer>>()
@@ -53,7 +53,7 @@ class AtomicSwapViewModel(val sender: MessageSender) : ViewModel() {
             tradeOfferItem.first.status = TradeOfferStatus.IN_PROGRESS
 
             if (trade.myCoin == Currency.ETH) {
-                val txid = WalletHolder.ethSwap.createSwap(trade)
+                val txid = walletApi.ethSwap.createSwap(trade)
                 val secretHash = trade.secretHash
                 val myPubKey = trade.myPubKey
 
@@ -64,7 +64,7 @@ class AtomicSwapViewModel(val sender: MessageSender) : ViewModel() {
                     secretHash = secretHash.toHex(),
                     txid,
                     myPubKey.toHex(),
-                    WalletHolder.ethereumWallet.address()
+                    walletApi.getEthAddress()
                 )
                 sender.sendInitiateMessage(peer, trade.id.toString(), dataToSend)
 
@@ -75,18 +75,18 @@ class AtomicSwapViewModel(val sender: MessageSender) : ViewModel() {
 
             } else if (trade.myCoin == Currency.BTC) {
                 Log.d(LOG, "generated secret : ${trade.secret?.toHex()}")
-                val (transaction, _) = WalletHolder.bitcoinSwap.createSwapTransaction(trade)
+                val (transaction, _) = walletApi.bitcoinSwap.createSwapTransaction(trade)
 
                 // add a confidence listener
-                WalletHolder.swapTransactionConfidenceListener.addTransactionInitiator(
+                walletApi.addInitiatorEntryToConfidenceListener(
                     TransactionConfidenceEntry(
                         transaction.txId.toString(),
                         accept.offerId,
                         peer
-                    )
-                )
+                    ))
+
                 // broadcast the transaction
-                WalletHolder.walletAppKit.peerGroup().broadcastTransaction(transaction)
+                walletApi.broadcastBitcoinTransaction(transaction)
                 // log
                 Log.d(
                     LOG,
@@ -144,20 +144,20 @@ class AtomicSwapViewModel(val sender: MessageSender) : ViewModel() {
 
             if (trade.myCoin == Currency.ETH) {
                 Log.d(LOG, "secret hash ${trade.secretHash?.toHex()}")
-                val txid = WalletHolder.ethSwap.createSwap(trade)
+                val txid = walletApi.ethSwap.createSwap(trade)
                 Log.d(
                     LOG,
-                    "get swap : ${WalletHolder.ethSwap.getSwap(trade.secretHash ?: error("")).amount}"
+                    "get swap : ${walletApi.ethSwap.getSwap(trade.secretHash ?: error("")).amount}"
                 )
-                WalletHolder.ethSwap.setOnClaimed(
+                walletApi.ethSwap.setOnClaimed(
                     trade.secretHash ?: error("we don't know the secret hash")
                 ) { secret ->
                     trade.setOnSecretObserved(secret)
                     if (trade.counterpartyCoin == Currency.BTC) {
-                        val tx = WalletHolder.bitcoinSwap.createClaimTransaction(trade)
-                        WalletHolder.walletAppKit.peerGroup().broadcastTransaction(tx)
+                        val tx = walletApi.bitcoinSwap.createClaimTransaction(trade)
+                        walletApi.broadcastBitcoinTransaction(tx)
 
-                        WalletHolder.swapTransactionConfidenceListener.addTransactionClaimed(
+                        walletApi.addClaimedEntryToConfidenceListener(
                             TransactionConfidenceEntry(
                                 tx.txId.toString(),
                                 trade.id.toString(),
@@ -184,12 +184,12 @@ class AtomicSwapViewModel(val sender: MessageSender) : ViewModel() {
             } else if (trade.myCoin == Currency.BTC) {
 
                 // create a swap transaction
-                val (transaction, scriptToWatch) = WalletHolder.bitcoinSwap.createSwapTransaction(
+                val (transaction, scriptToWatch) = walletApi.bitcoinSwap.createSwapTransaction(
                     trade
                 )
 
                 // add a listener on transaction
-                WalletHolder.swapTransactionConfidenceListener.addTransactionRecipient(
+                walletApi.addRecipientEntryToConfidenceListener(
                     TransactionConfidenceEntry(
                         transaction.txId.toString(),
                         initiateMessage.offerId,
@@ -202,7 +202,7 @@ class AtomicSwapViewModel(val sender: MessageSender) : ViewModel() {
                     ScriptBuilder.createP2SHOutputScript(scriptToWatch).getToAddress(
                         RegTestParams.get()
                     )
-                WalletHolder.swapTransactionBroadcastListener.addWatchedAddress(
+                walletApi.addWatchedAddress(
                     TransactionListenerEntry(
                         watchedAddress,
                         initiateMessage.offerId,
@@ -211,7 +211,7 @@ class AtomicSwapViewModel(val sender: MessageSender) : ViewModel() {
                 )
 
                 // broadcast transaction
-                WalletHolder.walletAppKit.peerGroup().broadcastTransaction(transaction)
+                walletApi.broadcastBitcoinTransaction(transaction)
 
                 // log
                 Log.d(LOG, "Bob created a transaction claimable by Alice")
@@ -256,7 +256,7 @@ class AtomicSwapViewModel(val sender: MessageSender) : ViewModel() {
                 IPv8Android.getInstance().getOverlay<TrustChainCommunity>()!!
 
             if (trade.counterpartyCoin == Currency.ETH) {
-                val receipt = WalletHolder.ethSwap.claimSwap(
+                val receipt = walletApi.ethSwap.claimSwap(
                     trade.secret ?: error("cannot claim swap, we don't know the secret")
                 )
                 Log.d(
@@ -266,18 +266,18 @@ class AtomicSwapViewModel(val sender: MessageSender) : ViewModel() {
                 Log.d(LOG, "tx receipt : $receipt")
             } else if (trade.counterpartyCoin == Currency.BTC) {
                 val tx = Transaction(RegTestParams(), completeMessage.txId.hexToBytes())
-                WalletHolder.bitcoinWallet.commitTx(tx)
+                walletApi.commitBitcoinTransaction(tx)
                 trade.setOnComplete(completeMessage.txId.hexToBytes())
-                val transaction = WalletHolder.bitcoinSwap.createClaimTransaction(trade)
+                val transaction = walletApi.bitcoinSwap.createClaimTransaction(trade)
 
-                WalletHolder.swapTransactionConfidenceListener.addTransactionClaimed(
+                walletApi.addClaimedEntryToConfidenceListener(
                     TransactionConfidenceEntry(
                         transaction.txId.toString(),
                         completeMessage.offerId,
                         peer
                     )
                 )
-                WalletHolder.walletAppKit.peerGroup().broadcastTransaction(transaction)
+                walletApi.broadcastBitcoinTransaction(transaction)
                 Log.d(LOG, "Alice created a claim transaction")
                 Log.d(LOG, transaction.toString())
                 val tchain_trans = mapOf(
@@ -311,20 +311,20 @@ class AtomicSwapViewModel(val sender: MessageSender) : ViewModel() {
             trade.setOnSecretObserved(secret)
 
             if (trade.counterpartyCoin == Currency.BTC) {
-                val transaction = WalletHolder.bitcoinSwap.createClaimTransaction(trade)
+                val transaction = walletApi.bitcoinSwap.createClaimTransaction(trade)
 
-                WalletHolder.swapTransactionConfidenceListener.addTransactionClaimed(
+                walletApi.addClaimedEntryToConfidenceListener(
                     TransactionConfidenceEntry(
                         transaction.txId.toString(),
                         offerId,
                         null
                     )
                 )
-                WalletHolder.walletAppKit.peerGroup().broadcastTransaction(transaction)
+                walletApi.broadcastBitcoinTransaction(transaction)
                 Log.d(LOG, "Bob created a claim transaction")
                 Log.d(LOG, transaction.toString())
             } else if (trade.counterpartyCoin == Currency.ETH) {
-                WalletHolder.ethSwap.claimSwap(secret)
+                walletApi.ethSwap.claimSwap(secret)
                 Log.d(LOG, "Bob claimed Ethereum. From a secret from bitcoin.")
             }
 
