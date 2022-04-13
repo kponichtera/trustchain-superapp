@@ -8,11 +8,13 @@ import nl.tudelft.trustchain.common.bitcoin.WalletService
 import nl.tudelft.trustchain.common.ethereum.EthereumWeb3jWallet
 import org.bitcoinj.core.Transaction
 import org.bitcoinj.kits.WalletAppKit
+import org.bitcoinj.wallet.KeyChain
 
 interface WalletAPI{
     val bitcoinSwap: BitcoinSwapI
     val ethSwap: EthereumSwapI
     fun getEthAddress():String
+    fun getBitcoinPubKey(): ByteArray
     fun broadcastBitcoinTransaction(transaction: Transaction)
     fun addInitiatorEntryToConfidenceListener(entry: TransactionConfidenceEntry)
     fun addClaimedEntryToConfidenceListener(entry: TransactionConfidenceEntry)
@@ -32,6 +34,10 @@ object WalletHolder: WalletAPI {
 
     override fun getEthAddress(): String {
         return ethereumWallet.address()
+    }
+
+    override fun getBitcoinPubKey(): ByteArray {
+        return bitcoinWallet.freshKey(KeyChain.KeyPurpose.AUTHENTICATION).pubKey
     }
 
     override fun broadcastBitcoinTransaction(transaction: Transaction) {
@@ -64,40 +70,4 @@ object WalletHolder: WalletAPI {
     }
 
     override val bitcoinSwap: BitcoinSwapI = BitcoinSwap()
-}
-
-object FakeWalletHolder: WalletAPI{
-    override val bitcoinSwap: BitcoinSwapI
-        get() = TODO("Not yet implemented")
-    override val ethSwap: EthereumSwapI
-        get() = TODO("Not yet implemented")
-
-    override fun getEthAddress(): String {
-        TODO("Not yet implemented")
-    }
-
-    override fun broadcastBitcoinTransaction(transaction: Transaction) {
-        TODO("Not yet implemented")
-    }
-
-    override fun addInitiatorEntryToConfidenceListener(entry: TransactionConfidenceEntry) {
-        TODO("Not yet implemented")
-    }
-
-    override fun addClaimedEntryToConfidenceListener(entry: TransactionConfidenceEntry) {
-        TODO("Not yet implemented")
-    }
-
-    override fun addRecipientEntryToConfidenceListener(entry: TransactionConfidenceEntry) {
-        TODO("Not yet implemented")
-    }
-
-    override fun addWatchedAddress(entry: TransactionListenerEntry) {
-        TODO("Not yet implemented")
-    }
-
-    override fun commitBitcoinTransaction(transaction: Transaction) {
-        TODO("Not yet implemented")
-    }
-
 }

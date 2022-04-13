@@ -16,6 +16,7 @@ import nl.tudelft.trustchain.atomicswap.R
 import nl.tudelft.trustchain.atomicswap.databinding.FragmentAtomicSwapBinding
 import nl.tudelft.trustchain.atomicswap.swap.Currency
 import nl.tudelft.trustchain.atomicswap.swap.Trade
+import nl.tudelft.trustchain.atomicswap.swap.WalletHolder
 import nl.tudelft.trustchain.atomicswap.ui.enums.TradeOfferStatus
 import nl.tudelft.trustchain.common.ui.BaseFragment
 import java.math.BigDecimal
@@ -108,6 +109,7 @@ class SwapFragment : BaseFragment(R.layout.fragment_atomic_swap) {
         val toCurrencyAmount = binding.toCurrencyInput.text.toString()
 
         val trade = Trade(
+            WalletHolder,
             Random.nextLong(),
             TradeOfferStatus.OPEN_BY_CURRENT_USER,
             Currency.fromString(fromCurrency.toString()),

@@ -14,6 +14,7 @@ import nl.tudelft.trustchain.atomicswap.messages.TradeMessage
 import nl.tudelft.trustchain.atomicswap.swap.Currency
 import nl.tudelft.trustchain.atomicswap.swap.Trade
 import nl.tudelft.trustchain.atomicswap.swap.WalletAPI
+import nl.tudelft.trustchain.atomicswap.swap.WalletHolder
 import nl.tudelft.trustchain.atomicswap.ui.enums.TradeOfferStatus
 import nl.tudelft.trustchain.atomicswap.ui.swap.LOG
 import org.bitcoinj.core.Transaction
@@ -29,6 +30,7 @@ class AtomicSwapViewModel(val sender: MessageSender, val walletApi: WalletAPI) :
         try {
             Log.i(LOG, "Received new trade offer: " + trade.offerId)
             val newTrade = Trade(
+                walletApi,
                 trade.offerId.toLong(),
                 TradeOfferStatus.OPEN,
                 Currency.fromString(trade.toCoin),
@@ -44,87 +46,92 @@ class AtomicSwapViewModel(val sender: MessageSender, val walletApi: WalletAPI) :
     }
 
     fun receivedAcceptMessage(accept: AcceptMessage, peer: Peer) {
-        try {
-            val trade = trades.first { it.id == accept.offerId.toLong() }
-            trade.setOnAccept(accept.btcPubKey.hexToBytes(), accept.ethAddress)
-            Log.d(LOG, "RECEIVED ACCEPT FROM ${peer.mid}")
 
-            val tradeOfferItem = tradeOffers.first { it.first.id == trade.id }
-            tradeOfferItem.first.status = TradeOfferStatus.IN_PROGRESS
+        // find trade in list of my trades
+        val trade = trades.first { it.id == accept.offerId.toLong() }
+        trade.setOnAccept(accept.btcPubKey.hexToBytes(), accept.ethAddress)
+//        Log.d(LOG, "RECEIVED ACCEPT FROM ${peer.mid}")
+        Log.d(LOG, "RECEIVED ACCEPT")
 
+        // change status in tradeOffers list
+        val tradeOfferItem = tradeOffers.first { it.first.id == trade.id }
+        tradeOfferItem.first.status = TradeOfferStatus.IN_PROGRESS
+
+        // create first transaction
+        if (walletApi is WalletHolder) {
             if (trade.myCoin == Currency.ETH) {
-                val txid = walletApi.ethSwap.createSwap(trade)
-                val secretHash = trade.secretHash
-                val myPubKey = trade.myPubKey
-
-                if (secretHash == null || myPubKey == null) {
-                    error("Some fields are not initialised")
-                }
-                val dataToSend = OnAcceptReturn(
-                    secretHash = secretHash.toHex(),
-                    txid,
-                    myPubKey.toHex(),
-                    walletApi.getEthAddress()
-                )
-                sender.sendInitiateMessage(peer, trade.id.toString(), dataToSend)
-
-                Log.d(
-                    LOG,
-                    "Alice created an ethereum transaction claimable by bob with id : $txid"
-                )
-
+                createFirstEthereumTransaction(trade, peer)
             } else if (trade.myCoin == Currency.BTC) {
-                Log.d(LOG, "generated secret : ${trade.secret?.toHex()}")
-                val (transaction, _) = walletApi.bitcoinSwap.createSwapTransaction(trade)
-
-                // add a confidence listener
-                walletApi.addInitiatorEntryToConfidenceListener(
-                    TransactionConfidenceEntry(
-                        transaction.txId.toString(),
-                        accept.offerId,
-                        peer
-                    ))
-
-                // broadcast the transaction
-                walletApi.broadcastBitcoinTransaction(transaction)
-                // log
-                Log.d(
-                    LOG,
-                    "Alice created a bitcoin transaction claimable by Bob with id: ${transaction.txId}"
-                )
+                createFirstBitcoinTransaction(trade, peer, accept.offerId)
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
         }
+    }
 
+    fun createFirstEthereumTransaction(trade: Trade, peer: Peer) {
+        val txid = walletApi.ethSwap.createSwap(trade)
+        val secretHash = trade.secretHash
+        val myPubKey = trade.myPubKey
+
+        if (secretHash == null || myPubKey == null) {
+            error("Some fields are not initialised")
+        }
+        val dataToSend = OnAcceptReturn(
+            secretHash = secretHash.toHex(),
+            txid,
+            myPubKey.toHex(),
+            walletApi.getEthAddress()
+        )
+        sender.sendInitiateMessage(peer, trade.id.toString(), dataToSend)
+
+        Log.d(
+            LOG,
+            "Alice created an ethereum transaction claimable by bob with id : $txid"
+        )
+    }
+
+    fun createFirstBitcoinTransaction(trade: Trade, peer: Peer, offerId: String) {
+        Log.d(LOG, "generated secret : ${trade.secret?.toHex()}")
+        val (transaction, _) = walletApi.bitcoinSwap.createSwapTransaction(trade)
+
+        // add a confidence listener
+        walletApi.addInitiatorEntryToConfidenceListener(
+            TransactionConfidenceEntry(
+                transaction.txId.toString(),
+                offerId,
+                peer
+            )
+        )
+
+        // broadcast the transaction
+        walletApi.broadcastBitcoinTransaction(transaction)
+        // log
+        Log.d(
+            LOG,
+            "Alice created a bitcoin transaction claimable by Bob with id: ${transaction.txId}"
+        )
     }
 
     fun transactionConfirmed(entry: TransactionConfidenceEntry) {
-        try {
-            val trade = trades.first { it.id == entry.offerId.toLong() }
+        val trade = trades.first { it.id == entry.offerId.toLong() }
 
-            val secretHash = trade.secretHash
-            val myTransaction = trade.myBitcoinTransaction
-            val myPubKey = trade.myPubKey
-            val myAddress = trade.myAddress
+        val secretHash = trade.secretHash
+        val myTransaction = trade.myBitcoinTransaction
+        val myPubKey = trade.myPubKey
+        val myAddress = trade.myAddress
 
-            if (secretHash == null || myTransaction == null || myPubKey == null || myAddress == null) {
-                error("Some fields are not initialised")
-            }
-
-            val dataToSend = OnAcceptReturn(
-                secretHash.toHex(),
-                myTransaction.toHex(),
-                myPubKey.toHex(),
-                myAddress
-            )
-
-            sender.sendInitiateMessage(entry.peer!!, entry.offerId, dataToSend)
-            Log.d(LOG, "Alice's transaction is confirmed")
-
-        } catch (e: Exception) {
-            Log.d(LOG, e.stackTraceToString())
+        if (secretHash == null || myTransaction == null || myPubKey == null || myAddress == null) {
+            error("Some fields are not initialised")
         }
+
+        val dataToSend = OnAcceptReturn(
+            secretHash.toHex(),
+            myTransaction.toHex(),
+            myPubKey.toHex(),
+            myAddress
+        )
+
+        sender.sendInitiateMessage(entry.peer!!, entry.offerId, dataToSend)
+        Log.d(LOG, "Alice's transaction is confirmed")
     }
 
     fun receivedInitiateMessage(initiateMessage: InitiateMessage, peer: Peer) {

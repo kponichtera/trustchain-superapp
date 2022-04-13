@@ -16,6 +16,7 @@ import kotlin.random.Random
  * that "0.01" Bitcoin.
  */
 data class Trade(
+    val walletAPI: WalletAPI,
     val id: Long,
     var status: TradeOfferStatus,
     val myCoin: Currency,
@@ -43,8 +44,8 @@ data class Trade(
 
     // Called by the recipient
     fun setOnTrade(){
-        myPubKey = WalletHolder.bitcoinWallet.freshKey(KeyChain.KeyPurpose.AUTHENTICATION).pubKey
-        myAddress= WalletHolder.ethereumWallet.address()
+        myPubKey = walletAPI.getBitcoinPubKey()
+        myAddress= walletAPI.getEthAddress()
     }
 
     fun setOnInitiate(counterpartyPubKey: ByteArray, secretHash: ByteArray, counterpartyBitcoinTransaction: ByteArray?, counterpartyAddress: String?) {
@@ -61,8 +62,8 @@ data class Trade(
 
     // Called by the initiator
     fun setOnAccept(counterpartyPubKey: ByteArray, ethAddress: String) {
-        myPubKey = WalletHolder.bitcoinWallet.freshKey(KeyChain.KeyPurpose.AUTHENTICATION).pubKey
-        myAddress= WalletHolder.ethereumWallet.address()
+        myPubKey = walletAPI.getBitcoinPubKey()
+        myAddress= walletAPI.getEthAddress()
         val randomSecret = Random.nextBytes(32)
         secret = randomSecret
         secretHash = Sha256Hash.hash(randomSecret)
