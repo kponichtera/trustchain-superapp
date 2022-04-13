@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.mattskala.itemadapter.ItemAdapter
 import kotlinx.coroutines.Dispatchers
@@ -28,7 +29,9 @@ class AtomicSwapActivity : BaseActivity() {
 
     val tradeOffersAdapter get() = _tradeOffersAdapter!!
 
-    val model: AtomicSwapViewModel by viewModels()
+    val model: AtomicSwapViewModel by viewModels {
+        AtomicSwapViewModelFactory(atomicSwapCommunity)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

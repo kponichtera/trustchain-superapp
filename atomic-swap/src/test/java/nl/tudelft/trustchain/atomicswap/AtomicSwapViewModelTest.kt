@@ -31,7 +31,16 @@ class FakeSender: MessageSender{
     override fun sendRemoveTradeMessage(offerId: String) {
         TODO("Not yet implemented")
     }
+}
 
+class FakeKey:Key{
+    override fun pub(): PublicKey {
+        TODO("Not yet implemented")
+    }
+
+    override fun keyToBin(): ByteArray {
+        TODO("Not yet implemented")
+    }
 }
 
 class AtomicSwapViewModelTest() {
@@ -55,15 +64,4 @@ class AtomicSwapViewModelTest() {
         viewModel.receivedTradeMessage(tradeMessage, peer)
         assertEquals(trade, viewModel.tradeOffers[0].first)
     }
-}
-
-class FakeKey:Key{
-    override fun pub(): PublicKey {
-        TODO("Not yet implemented")
-    }
-
-    override fun keyToBin(): ByteArray {
-        TODO("Not yet implemented")
-    }
-
 }
