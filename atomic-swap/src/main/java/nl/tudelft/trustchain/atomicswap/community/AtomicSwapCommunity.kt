@@ -24,7 +24,14 @@ object AtomicSwapTrustchainConstants {
     const val TRANSACTION_OFFER_ID = "offer_id"
 }
 
-class AtomicSwapCommunity : Community() {
+interface MessageSender{
+    fun sendAcceptMessage(peer: Peer, offerId:String, btcPubKey: String, ethAddress: String )
+    fun sendInitiateMessage(peer:Peer, offerId: String, data: OnAcceptReturn)
+    fun sendCompleteMessage(peer: Peer, offerId: String, txId: String)
+    fun sendRemoveTradeMessage(offerId: String)
+}
+
+class AtomicSwapCommunity : Community(), MessageSender {
     override val serviceId = "abcdefabcdefabcdefabcdefabcdef0123456789"
     val discoveredAddressesContacted: MutableMap<IPv4Address, Date> = mutableMapOf()
     val lastTrackerResponses = mutableMapOf<IPv4Address, Date>()
@@ -131,14 +138,14 @@ class AtomicSwapCommunity : Community() {
         }
     }
 
-    fun sendAcceptMessage(peer: Peer, offerId:String, btcPubKey: String, ethAddress: String ){
+    override fun sendAcceptMessage(peer: Peer, offerId:String, btcPubKey: String, ethAddress: String ){
         send(
             peer.address,
             serializePacket(Companion.ACCEPT_MESSAGE_ID, AcceptMessage(offerId, btcPubKey, ethAddress))
         )
     }
 
-    fun sendInitiateMessage(peer:Peer, offerId: String, data: OnAcceptReturn) {
+    override fun sendInitiateMessage(peer:Peer, offerId: String, data: OnAcceptReturn) {
         Log.d("AtomicSwapCommunity", peer.mid + ": SENDING INITIATE")
         send(
             peer.address,
@@ -149,7 +156,7 @@ class AtomicSwapCommunity : Community() {
         )
     }
 
-    fun sendCompleteMessage(peer: Peer, offerId: String, txId: String){
+    override fun sendCompleteMessage(peer: Peer, offerId: String, txId: String){
         Log.d("AtomicSwapCommunity", peer.mid + ": SENDING COMPLETE MESSAGE")
         send(
             peer.address,
@@ -160,7 +167,7 @@ class AtomicSwapCommunity : Community() {
         )
     }
 
-    fun sendRemoveTradeMessage(offerId: String) {
+    override fun sendRemoveTradeMessage(offerId: String) {
         Log.d("AtomicSwapCommunity", "SENDING REMOVE TRADE MESS")
         for (peer in getPeers()) {
             send(

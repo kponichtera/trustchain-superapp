@@ -115,8 +115,8 @@ class SwapFragment : BaseFragment(R.layout.fragment_atomic_swap) {
             Currency.fromString(toCurrency.toString()),
             toCurrencyAmount
         )
-        (activity as AtomicSwapActivity).trades.add(trade)
-        (activity as AtomicSwapActivity).tradeOffers.add(Pair(trade, atomicSwapCommunity.myPeer))
+        (activity as AtomicSwapActivity).model.trades.add(trade)
+        (activity as AtomicSwapActivity).model.tradeOffers.add(Pair(trade, atomicSwapCommunity.myPeer))
         (activity as AtomicSwapActivity).updateTradeOffersAdapter()
         atomicSwapCommunity.broadcastTradeOffer(
             trade.id.toString(),
