@@ -3,10 +3,9 @@ package nl.tudelft.trustchain.atomicswap
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import nl.tudelft.ipv8.Peer
-import nl.tudelft.ipv8.android.IPv8Android
-import nl.tudelft.ipv8.attestation.trustchain.TrustChainCommunity
 import nl.tudelft.ipv8.util.hexToBytes
 import nl.tudelft.ipv8.util.toHex
+import nl.tudelft.trustchain.atomicswap.community.TrustChainWrapperAPI
 import nl.tudelft.trustchain.atomicswap.messages.AcceptMessage
 import nl.tudelft.trustchain.atomicswap.messages.CompleteSwapMessage
 import nl.tudelft.trustchain.atomicswap.messages.InitiateMessage
@@ -21,7 +20,11 @@ import org.bitcoinj.core.Transaction
 import org.bitcoinj.params.RegTestParams
 import org.bitcoinj.script.ScriptBuilder
 
-class AtomicSwapViewModel(val sender: MessageSender, val walletApi: WalletAPI) : ViewModel() {
+class AtomicSwapViewModel(
+    val sender: MessageSender,
+    val walletApi: WalletAPI,
+    val trustChainWrapperAPI: TrustChainWrapperAPI
+) : ViewModel() {
 
     var trades = mutableListOf<Trade>()
     var tradeOffers = mutableListOf<Pair<Trade, Peer>>()
@@ -109,29 +112,6 @@ class AtomicSwapViewModel(val sender: MessageSender, val walletApi: WalletAPI) :
             LOG,
             "Alice created a bitcoin transaction claimable by Bob with id: ${transaction.txId}"
         )
-    }
-
-    fun transactionConfirmed(entry: TransactionConfidenceEntry) {
-        val trade = trades.first { it.id == entry.offerId.toLong() }
-
-        val secretHash = trade.secretHash
-        val myTransaction = trade.myBitcoinTransaction
-        val myPubKey = trade.myPubKey
-        val myAddress = trade.myAddress
-
-        if (secretHash == null || myTransaction == null || myPubKey == null || myAddress == null) {
-            error("Some fields are not initialised")
-        }
-
-        val dataToSend = OnAcceptReturn(
-            secretHash.toHex(),
-            myTransaction.toHex(),
-            myPubKey.toHex(),
-            myAddress
-        )
-
-        sender.sendInitiateMessage(entry.peer!!, entry.offerId, dataToSend)
-        Log.d(LOG, "Alice's transaction is confirmed")
     }
 
     fun receivedInitiateMessage(initiateMessage: InitiateMessage, peer: Peer) {
@@ -231,85 +211,51 @@ class AtomicSwapViewModel(val sender: MessageSender, val walletApi: WalletAPI) :
         }
     }
 
-    fun transactionRecipientConfirmed(entry: TransactionConfidenceEntry) {
-
-        try {
-            val trade = trades.first { it.id == entry.offerId.toLong() }
-            val myTransaction =
-                trade.myBitcoinTransaction ?: error("Some fields are not initialized")
-
-
-            // send complete message
-            sender.sendCompleteMessage(
-                entry.peer!!,
-                entry.offerId,
-                myTransaction.toHex()
-            )
-            Log.d(LOG, "Bob's transaction is confirmed")
-
-            val tradeOffer = tradeOffers.first { it.first.id == trade.id }
-            tradeOffer.first.status = TradeOfferStatus.COMPLETED
-            sender.sendRemoveTradeMessage(trade.id.toString())
-
-        } catch (e: Exception) {
-            Log.d(LOG, e.stackTraceToString())
-        }
-    }
-
     fun receivedCompleteMessage(completeMessage: CompleteSwapMessage, peer: Peer) {
-        try {
-            val trade = trades.first { it.id == completeMessage.offerId.toLong() }
-            val trustChainCommunity =
-                IPv8Android.getInstance().getOverlay<TrustChainCommunity>()!!
+        val trade = trades.first { it.id == completeMessage.offerId.toLong() }
 
-            if (trade.counterpartyCoin == Currency.ETH) {
-                val receipt = walletApi.ethSwap.claimSwap(
-                    trade.secret ?: error("cannot claim swap, we don't know the secret")
-                )
-                Log.d(
-                    LOG,
-                    "Alice received a complete message from Bob and is now claiming Bob's ether."
-                )
-                Log.d(LOG, "tx receipt : $receipt")
-            } else if (trade.counterpartyCoin == Currency.BTC) {
-                val tx = Transaction(RegTestParams(), completeMessage.txId.hexToBytes())
-                walletApi.commitBitcoinTransaction(tx)
-                trade.setOnComplete(completeMessage.txId.hexToBytes())
-                val transaction = walletApi.bitcoinSwap.createClaimTransaction(trade)
+        if (trade.counterpartyCoin == Currency.ETH) {
+            val receipt = walletApi.ethSwap.claimSwap(
+                trade.secret ?: error("cannot claim swap, we don't know the secret")
+            )
+            Log.d(
+                LOG,
+                "Alice received a complete message from Bob and is now claiming Bob's ether."
+            )
+            Log.d(LOG, "tx receipt : $receipt")
+        } else if (trade.counterpartyCoin == Currency.BTC) {
+            val tx = Transaction(RegTestParams(), completeMessage.txId.hexToBytes())
+            walletApi.commitBitcoinTransaction(tx)
+            trade.setOnComplete(completeMessage.txId.hexToBytes())
+            val transaction = walletApi.bitcoinSwap.createClaimTransaction(trade)
 
-                walletApi.addClaimedEntryToConfidenceListener(
-                    TransactionConfidenceEntry(
-                        transaction.txId.toString(),
-                        completeMessage.offerId,
-                        peer
-                    )
+            walletApi.addClaimedEntryToConfidenceListener(
+                TransactionConfidenceEntry(
+                    transaction.txId.toString(),
+                    completeMessage.offerId,
+                    peer
                 )
-                walletApi.broadcastBitcoinTransaction(transaction)
-                Log.d(LOG, "Alice created a claim transaction")
-                Log.d(LOG, transaction.toString())
-                val tchain_trans = mapOf(
-                    AtomicSwapTrustchainConstants.TRANSACTION_FROM_COIN to trade.myCoin.toString(),
-                    AtomicSwapTrustchainConstants.TRANSACTION_TO_COIN to trade.counterpartyCoin.toString(),
-                    AtomicSwapTrustchainConstants.TRANSACTION_FROM_AMOUNT to trade.myAmount,
-                    AtomicSwapTrustchainConstants.TRANSACTION_TO_AMOUNT to trade.counterpartyAmount,
-                    AtomicSwapTrustchainConstants.TRANSACTION_OFFER_ID to trade.id
-                )
-                val publicKey = peer.publicKey.keyToBin()
-                trustChainCommunity.createProposalBlock(
-                    AtomicSwapTrustchainConstants.ATOMIC_SWAP_COMPLETED_BLOCK,
-                    tchain_trans,
-                    publicKey
-                )
-                Log.d(LOG, "Alice created a trustchain proposal block")
-            }
-
-            val tradeOffer = tradeOffers.first { it.first.id == trade.id }
-            tradeOffer.first.status = TradeOfferStatus.COMPLETED
-            sender.sendRemoveTradeMessage(trade.id.toString())
-
-        } catch (e: Exception) {
-            Log.d(LOG, e.stackTraceToString())
+            )
+            walletApi.broadcastBitcoinTransaction(transaction)
+            Log.d(LOG, "Alice created a claim transaction")
+            Log.d(LOG, transaction.toString())
+            val tchain_trans = mapOf(
+                AtomicSwapTrustchainConstants.TRANSACTION_FROM_COIN to trade.myCoin.toString(),
+                AtomicSwapTrustchainConstants.TRANSACTION_TO_COIN to trade.counterpartyCoin.toString(),
+                AtomicSwapTrustchainConstants.TRANSACTION_FROM_AMOUNT to trade.myAmount,
+                AtomicSwapTrustchainConstants.TRANSACTION_TO_AMOUNT to trade.counterpartyAmount,
+                AtomicSwapTrustchainConstants.TRANSACTION_OFFER_ID to trade.id
+            )
+            trustChainWrapperAPI.createProposalBlock(
+                tchain_trans,
+                peer
+            )
+            Log.d(LOG, "Alice created a trustchain proposal block")
         }
+
+        val tradeOffer = tradeOffers.first { it.first.id == trade.id }
+        tradeOffer.first.status = TradeOfferStatus.COMPLETED
+        sender.sendRemoveTradeMessage(trade.id.toString())
     }
 
     fun secretRevealed(secret: ByteArray, offerId: String) {
@@ -342,5 +288,52 @@ class AtomicSwapViewModel(val sender: MessageSender, val walletApi: WalletAPI) :
         } catch (e: Exception) {
             Log.d(LOG, e.stackTraceToString())
         }
+    }
+
+
+    // METHODS FOR HANDLING BITCOIN TRANSACTION CONFIRMED EVENTS
+
+    fun transactionInitiatorConfirmed(entry: TransactionConfidenceEntry) {
+        val trade = trades.first { it.id == entry.offerId.toLong() }
+
+        val secretHash = trade.secretHash
+        val myTransaction = trade.myBitcoinTransaction
+        val myPubKey = trade.myPubKey
+        val myAddress = trade.myAddress
+
+        if (secretHash == null || myTransaction == null || myPubKey == null || myAddress == null) {
+            error("Some fields are not initialised")
+        }
+
+        val dataToSend = OnAcceptReturn(
+            secretHash.toHex(),
+            myTransaction.toHex(),
+            myPubKey.toHex(),
+            myAddress
+        )
+
+        sender.sendInitiateMessage(entry.peer!!, entry.offerId, dataToSend)
+        Log.d(LOG, "Alice's transaction is confirmed")
+    }
+
+    fun transactionRecipientConfirmed(entry: TransactionConfidenceEntry) {
+        val trade = trades.first { it.id == entry.offerId.toLong() }
+
+        val myTransaction =
+            trade.myBitcoinTransaction ?: error("Some fields are not initialized")
+
+
+        // send complete message
+        sender.sendCompleteMessage(
+            entry.peer!!,
+            entry.offerId,
+            myTransaction.toHex()
+        )
+        Log.d(LOG, "Bob's transaction is confirmed")
+
+        val tradeOffer = tradeOffers.first { it.first.id == trade.id }
+        tradeOffer.first.status = TradeOfferStatus.COMPLETED
+        sender.sendRemoveTradeMessage(trade.id.toString())
+
     }
 }

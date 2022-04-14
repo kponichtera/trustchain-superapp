@@ -1,20 +1,23 @@
-package nl.tudelft.trustchain.atomicswap
+package nl.tudelft.trustchain.atomicswap.viewmodel.onMessages
 
 import nl.tudelft.ipv8.Peer
 import nl.tudelft.ipv8.util.toHex
+import nl.tudelft.trustchain.atomicswap.AtomicSwapViewModel
+import nl.tudelft.trustchain.atomicswap.TransactionConfidenceEntry
 import nl.tudelft.trustchain.atomicswap.messages.AcceptMessage
 import nl.tudelft.trustchain.atomicswap.swap.Currency
 import nl.tudelft.trustchain.atomicswap.swap.Trade
 import nl.tudelft.trustchain.atomicswap.ui.enums.TradeOfferStatus
-import nl.tudelft.trustchain.atomicswap.viewmodel.FakeKey
-import nl.tudelft.trustchain.atomicswap.viewmodel.FakeSender
-import nl.tudelft.trustchain.atomicswap.viewmodel.InitiatorWalletHolder
+import nl.tudelft.trustchain.atomicswap.viewmodel.mocks.FakeKey
+import nl.tudelft.trustchain.atomicswap.viewmodel.mocks.FakeSender
+import nl.tudelft.trustchain.atomicswap.viewmodel.mocks.InitiatorWalletHolder
+import nl.tudelft.trustchain.atomicswap.viewmodel.mocks.TrustChainWrapperMock
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class AtomicSwapViewModelInitiatorTestTest {
 
-    val viewModel = AtomicSwapViewModel(FakeSender(), InitiatorWalletHolder)
+    val viewModel = AtomicSwapViewModel(FakeSender(), InitiatorWalletHolder, TrustChainWrapperMock())
     val peer: Peer = Peer(FakeKey())
     val trade = Trade(
         InitiatorWalletHolder,
@@ -36,6 +39,9 @@ class AtomicSwapViewModelInitiatorTestTest {
     val counterpartyBitcoinTransaction = "3".toByteArray()
     val myBitcoinTransaction = "4".toByteArray()
     val secret = "5".toByteArray()
+
+
+    // ON ACCEPT
 
     @Test(expected = NoSuchElementException::class)
     fun `when received accept message and empty tradeOffers and trades throw exception`() {
@@ -62,14 +68,14 @@ class AtomicSwapViewModelInitiatorTestTest {
     @Test(expected = NoSuchElementException::class)
     fun `transaction confirmed but not in trades list`(){
         val entry = TransactionConfidenceEntry("1","1",peer)
-        viewModel.transactionConfirmed(entry)
+        viewModel.transactionInitiatorConfirmed(entry)
     }
 
     @Test(expected = IllegalStateException::class)
     fun `transaction confirmed but it is not accepted`(){
         viewModel.trades.add(trade)
         val entry = TransactionConfidenceEntry("1","1",peer)
-        viewModel.transactionConfirmed(entry)
+        viewModel.transactionInitiatorConfirmed(entry)
     }
 
     @Test
@@ -78,6 +84,11 @@ class AtomicSwapViewModelInitiatorTestTest {
         trade.setOnAccept(counterpartyPubKey,counterpartyAddress)
         trade.setOnTransactionCreated("1".toByteArray())
         val entry = TransactionConfidenceEntry("1","1",peer)
-        viewModel.transactionConfirmed(entry)
+        viewModel.transactionInitiatorConfirmed(entry)
     }
+
+
+    // ON COMPLETE
+
+
 }

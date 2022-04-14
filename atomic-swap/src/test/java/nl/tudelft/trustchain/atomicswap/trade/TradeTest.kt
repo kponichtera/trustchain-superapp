@@ -1,9 +1,9 @@
-package nl.tudelft.trustchain.atomicswap
+package nl.tudelft.trustchain.atomicswap.trade
 
 import nl.tudelft.trustchain.atomicswap.swap.Currency
 import nl.tudelft.trustchain.atomicswap.swap.Trade
 import nl.tudelft.trustchain.atomicswap.ui.enums.TradeOfferStatus
-import nl.tudelft.trustchain.atomicswap.viewmodel.InitiatorWalletHolder
+import nl.tudelft.trustchain.atomicswap.viewmodel.mocks.InitiatorWalletHolder
 import org.junit.Assert
 import org.junit.Test
 

@@ -1,4 +1,4 @@
-package nl.tudelft.trustchain.atomicswap.viewmodel
+package nl.tudelft.trustchain.atomicswap.viewmodel.mocks
 
 import nl.tudelft.trustchain.atomicswap.BitcoinSwapI
 import nl.tudelft.trustchain.atomicswap.TransactionConfidenceEntry
@@ -7,18 +7,18 @@ import nl.tudelft.trustchain.atomicswap.swap.WalletAPI
 import nl.tudelft.trustchain.atomicswap.swap.eth.EthereumSwapI
 import org.bitcoinj.core.Transaction
 
-object InitiatorWalletHolder: WalletAPI {
+object RecipientWalletHolder: WalletAPI {
     override val bitcoinSwap: BitcoinSwapI
         get() = BitcoinSwapMock()
     override val ethSwap: EthereumSwapI
         get() = EthereumSwapMock()
 
     override fun getEthAddress(): String {
-        return "1"
+        return "2"
     }
 
     override fun getBitcoinPubKey(): ByteArray {
-        return "1".toByteArray()
+        return "2".toByteArray()
     }
 
     override fun broadcastBitcoinTransaction(transaction: Transaction) {}
@@ -33,3 +33,4 @@ object InitiatorWalletHolder: WalletAPI {
 
     override fun commitBitcoinTransaction(transaction: Transaction) {}
 }
+

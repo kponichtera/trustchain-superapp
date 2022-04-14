@@ -1,21 +1,21 @@
-package nl.tudelft.trustchain.atomicswap.viewmodel
+package nl.tudelft.trustchain.atomicswap.viewmodel.onMessages
 
 import nl.tudelft.ipv8.Peer
-import nl.tudelft.ipv8.keyvault.Key
-import nl.tudelft.ipv8.keyvault.PublicKey
-import nl.tudelft.ipv8.util.toHex
 import nl.tudelft.trustchain.atomicswap.AtomicSwapViewModel
-import nl.tudelft.trustchain.atomicswap.messages.AcceptMessage
 import nl.tudelft.trustchain.atomicswap.messages.TradeMessage
 import nl.tudelft.trustchain.atomicswap.swap.Currency
 import nl.tudelft.trustchain.atomicswap.swap.Trade
 import nl.tudelft.trustchain.atomicswap.ui.enums.TradeOfferStatus
+import nl.tudelft.trustchain.atomicswap.viewmodel.mocks.FakeKey
+import nl.tudelft.trustchain.atomicswap.viewmodel.mocks.FakeSender
+import nl.tudelft.trustchain.atomicswap.viewmodel.mocks.RecipientWalletHolder
+import nl.tudelft.trustchain.atomicswap.viewmodel.mocks.TrustChainWrapperMock
 import org.junit.Assert
 import org.junit.Test
 
 class AtomicSwapViewModelRecipientTest() {
 
-    val viewModel = AtomicSwapViewModel(FakeSender(), RecipientWalletHolder)
+    val viewModel = AtomicSwapViewModel(FakeSender(), RecipientWalletHolder, TrustChainWrapperMock())
     val peer: Peer = Peer(FakeKey())
     val trade = Trade(RecipientWalletHolder,1, TradeOfferStatus.OPEN, Currency.ETH,"20", Currency.BTC, "10")
 

@@ -4,13 +4,13 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.mattskala.itemadapter.ItemAdapter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import nl.tudelft.ipv8.android.IPv8Android
 import nl.tudelft.ipv8.util.toHex
+import nl.tudelft.trustchain.atomicswap.community.TrustChainCommunityWrapper
 import nl.tudelft.trustchain.atomicswap.swap.WalletHolder
 import nl.tudelft.trustchain.atomicswap.ui.enums.TradeOfferStatus
 import nl.tudelft.trustchain.atomicswap.ui.swap.LOG
@@ -30,7 +30,7 @@ class AtomicSwapActivity : BaseActivity() {
     val tradeOffersAdapter get() = _tradeOffersAdapter!!
 
     val model: AtomicSwapViewModel by viewModels {
-        AtomicSwapViewModelFactory(atomicSwapCommunity, WalletHolder)
+        AtomicSwapViewModelFactory(atomicSwapCommunity, WalletHolder, TrustChainCommunityWrapper())
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -81,7 +81,7 @@ class AtomicSwapActivity : BaseActivity() {
         }
 
         WalletHolder.swapTransactionConfidenceListener.setOnTransactionConfirmed { entry ->
-            model.transactionConfirmed(entry)
+            model.transactionInitiatorConfirmed(entry)
         }
 
 

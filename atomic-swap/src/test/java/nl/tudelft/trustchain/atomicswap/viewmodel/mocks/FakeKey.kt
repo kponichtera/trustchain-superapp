@@ -1,4 +1,4 @@
-package nl.tudelft.trustchain.atomicswap.viewmodel
+package nl.tudelft.trustchain.atomicswap.viewmodel.mocks
 
 import nl.tudelft.ipv8.keyvault.Key
 import nl.tudelft.ipv8.keyvault.PublicKey

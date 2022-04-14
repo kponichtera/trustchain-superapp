@@ -1,8 +1,7 @@
-package nl.tudelft.trustchain.atomicswap.viewmodel
+package nl.tudelft.trustchain.atomicswap.viewmodel.mocks
 
 import nl.tudelft.trustchain.atomicswap.BitcoinSwapI
 import nl.tudelft.trustchain.atomicswap.swap.Trade
-import org.bitcoinj.core.NetworkParameters
 import org.bitcoinj.core.Transaction
 import org.bitcoinj.params.RegTestParams
 import org.bitcoinj.script.Script
