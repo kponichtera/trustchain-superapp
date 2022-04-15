@@ -10,6 +10,7 @@ import org.bitcoinj.script.Script
 import org.bitcoinj.script.ScriptBuilder
 import org.bitcoinj.script.ScriptOpCodes
 import org.bitcoinj.wallet.SendRequest
+import org.bitcoinj.wallet.Wallet
 
 
 interface BitcoinSwapI {
@@ -62,12 +63,15 @@ class BitcoinSwap(
             .build()
 
 
+    override fun createSwapTransaction(trade: Trade): Pair<Transaction, Script> {
+        return createSwapTransaction(trade, wallet = WalletHolder.bitcoinWallet)
+    }
 
     /**
      * Creates the transaction for initiating the swap process.
      * @return A pair of the transaction to be broadcast and the pubKey script
      */
-    override fun createSwapTransaction(trade: Trade): Pair<Transaction,Script> {
+    fun createSwapTransaction(trade: Trade, wallet: Wallet): Pair<Transaction,Script> {
 
         // extract the needed fields from the Trade object which should have been initialized at this point
         val myPubKey = trade.myPubKey
@@ -95,7 +99,7 @@ class BitcoinSwap(
 
         // complete the transaction
         val sendRequest = SendRequest.forTx(transaction)
-        WalletHolder.bitcoinWallet.completeTx(sendRequest)
+        wallet.completeTx(sendRequest)
 
         // update Trade object
         trade.setOnTransactionCreated(sendRequest.tx.bitcoinSerialize())
@@ -103,11 +107,15 @@ class BitcoinSwap(
         return sendRequest.tx to swapScript
     }
 
+    override fun createClaimTransaction(trade: Trade): Transaction {
+        return createClaimTransaction(trade,WalletHolder.bitcoinWallet)
+    }
+
     /**
      * Creates the transaction that claims the money from the Atomic Swap transaction
      * @return the transaction
      */
-    override fun createClaimTransaction(trade: Trade): Transaction {
+    fun createClaimTransaction(trade: Trade, wallet: Wallet): Transaction {
 
         // extract the needed fields from the Trade object which should have been initialized at this point
         val myPubKey = trade.myPubKey
@@ -124,16 +132,16 @@ class BitcoinSwap(
         val swapTransactionOutput = swapTransaction.outputs.find {
             it.scriptPubKey.scriptType == Script.ScriptType.P2SH
         } ?: error("could not find transaction output")
-        val swapTransactionAmount = swapTransactionOutput.value.div(10).multiply(9)
+        val swapTransactionAmount = swapTransactionOutput.value
 
-        val key = WalletHolder.bitcoinWallet.findKeyFromPubKey(myPubKey)
+        val key =wallet.findKeyFromPubKey(myPubKey)
 
         // create a transaction
         val transaction = Transaction(networkParams)
         transaction.setVersion(2)
 
         // add an output
-        transaction.addOutput(swapTransactionAmount, WalletHolder.bitcoinWallet.currentReceiveAddress())
+        transaction.addOutput(swapTransactionAmount, wallet.currentReceiveAddress())
 
         // add an input
         val input = transaction.addInput(swapTransactionOutput)
