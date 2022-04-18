@@ -158,5 +158,5 @@ class BitcoinSwap(
         }
 
         return transaction
-    }å
+    }
 }
