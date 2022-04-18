@@ -150,12 +150,8 @@ class AtomicSwapActivity : BaseActivity() {
 
         atomicSwapCommunity.setOnRemove { removeMessage, _ ->
             try {
-                val myTrade = model.trades.find { it.id == removeMessage.offerId.toLong() }
-                /* Only remove the trade if you weren't involved in it */
-                if (myTrade == null) {
-                    model.tradeOffers.remove(model.tradeOffers.first { it.first.id == removeMessage.offerId.toLong() })
-                    updateTradeOffersAdapter()
-                }
+                model.receivedRemoveMessage(removeMessage)
+                updateTradeOffersAdapter()
             } catch (e: Exception) {
                 Log.d(LOG, e.stackTraceToString())
             }

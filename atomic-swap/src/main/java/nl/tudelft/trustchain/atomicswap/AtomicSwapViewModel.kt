@@ -6,10 +6,7 @@ import nl.tudelft.ipv8.Peer
 import nl.tudelft.ipv8.util.hexToBytes
 import nl.tudelft.ipv8.util.toHex
 import nl.tudelft.trustchain.atomicswap.community.TrustChainWrapperAPI
-import nl.tudelft.trustchain.atomicswap.messages.AcceptMessage
-import nl.tudelft.trustchain.atomicswap.messages.CompleteSwapMessage
-import nl.tudelft.trustchain.atomicswap.messages.InitiateMessage
-import nl.tudelft.trustchain.atomicswap.messages.TradeMessage
+import nl.tudelft.trustchain.atomicswap.messages.*
 import nl.tudelft.trustchain.atomicswap.swap.Currency
 import nl.tudelft.trustchain.atomicswap.swap.Trade
 import nl.tudelft.trustchain.atomicswap.swap.WalletAPI
@@ -246,6 +243,14 @@ class AtomicSwapViewModel(
         val tradeOffer = tradeOffers.first { it.first.id == trade.id }
         tradeOffer.first.status = TradeOfferStatus.COMPLETED
         sender.sendRemoveTradeMessage(trade.id.toString())
+    }
+
+    fun receivedRemoveMessage(removeMessage: RemoveTradeMessage){
+        val myTrade = trades.find { it.id == removeMessage.offerId.toLong() }
+        /* Only remove the trade if you weren't involved in it */
+        if (myTrade == null) {
+            tradeOffers.remove(tradeOffers.first { it.first.id == removeMessage.offerId.toLong() })
+        }
     }
 
     fun secretRevealed(secret: ByteArray, offerId: String) {
