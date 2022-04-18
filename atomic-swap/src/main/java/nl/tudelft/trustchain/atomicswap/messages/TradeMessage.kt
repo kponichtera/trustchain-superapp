@@ -4,11 +4,6 @@ import nl.tudelft.ipv8.messaging.Deserializable
 import nl.tudelft.ipv8.messaging.Serializable
 import nl.tudelft.ipv8.util.toHex
 
-object TradeConstants {
-    const val BITCOIN = "BTC"
-    const val ETHEREUM = "ETH"
-}
-
 data class TradeMessage(val offerId: String, val fromCoin: String, val toCoin: String, val fromAmount: String, val toAmount: String) : Serializable {
     override fun serialize(): ByteArray {
         val msgString = "$offerId;$fromCoin;$toCoin;$fromAmount;$toAmount;"

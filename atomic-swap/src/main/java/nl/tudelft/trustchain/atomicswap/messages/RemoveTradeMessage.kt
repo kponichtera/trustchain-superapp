@@ -4,7 +4,7 @@ import nl.tudelft.ipv8.messaging.Deserializable
 import nl.tudelft.ipv8.messaging.Serializable
 import nl.tudelft.ipv8.util.toHex
 
-class RemoveTradeMessage(val offerId: String) : Serializable {
+data class RemoveTradeMessage(val offerId: String) : Serializable {
     override fun serialize(): ByteArray {
         val msgString = "$offerId;"
         return msgString.toByteArray()
