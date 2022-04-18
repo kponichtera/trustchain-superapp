@@ -336,4 +336,11 @@ class AtomicSwapViewModel(
         sender.sendRemoveTradeMessage(trade.id.toString())
 
     }
+
+    fun claimedTransactionConfirmed(offerId: String){
+        Log.d(LOG, "The claim transaction is confirmed")
+        val tradeOffer = tradeOffers.first { it.first.id == offerId.toLong() }
+        tradeOffer.first.status = TradeOfferStatus.COMPLETED
+        sender.sendRemoveTradeMessage(offerId)
+    }
 }
