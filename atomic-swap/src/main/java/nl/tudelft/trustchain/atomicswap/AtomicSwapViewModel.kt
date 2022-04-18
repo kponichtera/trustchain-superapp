@@ -245,11 +245,33 @@ class AtomicSwapViewModel(
         sender.sendRemoveTradeMessage(trade.id.toString())
     }
 
-    fun receivedRemoveMessage(removeMessage: RemoveTradeMessage){
+    fun receivedRemoveMessage(removeMessage: RemoveTradeMessage) {
         val myTrade = trades.find { it.id == removeMessage.offerId.toLong() }
         /* Only remove the trade if you weren't involved in it */
         if (myTrade == null) {
             tradeOffers.remove(tradeOffers.first { it.first.id == removeMessage.offerId.toLong() })
+        }
+    }
+
+    fun acceptTrade(id: Long) {
+        val tradeOffer = tradeOffers.find { it.first.id == id }
+        if (tradeOffer != null) {
+            val trade = tradeOffer.first
+            val peer = tradeOffer.second
+
+            trade.status = TradeOfferStatus.IN_PROGRESS
+            val newTrade = trade.copy()
+            trades.add(newTrade)
+
+            newTrade.setOnTrade()
+            val myPubKey = newTrade.myPubKey ?: error("Some fields are not initialized")
+            val myAddress = newTrade.myAddress ?: error("Some fields are not initialized")
+            sender.sendAcceptMessage(
+                peer,
+                trade.id.toString(),
+                myPubKey.toHex(),
+                myAddress
+            )
         }
     }
 

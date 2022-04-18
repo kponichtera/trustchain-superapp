@@ -3,16 +3,13 @@ package nl.tudelft.trustchain.atomicswap
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.viewModels
-import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.lifecycleScope
 import com.mattskala.itemadapter.ItemAdapter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import nl.tudelft.ipv8.android.IPv8Android
-import nl.tudelft.ipv8.util.toHex
 import nl.tudelft.trustchain.atomicswap.community.TrustChainCommunityWrapper
 import nl.tudelft.trustchain.atomicswap.swap.WalletHolder
-import nl.tudelft.trustchain.atomicswap.ui.enums.TradeOfferStatus
 import nl.tudelft.trustchain.atomicswap.ui.swap.LOG
 import nl.tudelft.trustchain.atomicswap.ui.tradeoffers.list.TradeOfferItem
 import nl.tudelft.trustchain.atomicswap.ui.tradeoffers.list.TradeOfferItemRenderer
@@ -160,38 +157,11 @@ class AtomicSwapActivity : BaseActivity() {
 
     /* call this when user accepts trade offer from Trade Offers screen */
     private fun acceptTrade(tradeOfferItem: TradeOfferItem) {
-        val tradeOffer = model.tradeOffers.find { it.first.id == tradeOfferItem.id }
-        if (tradeOffer != null) {
-            val trade = tradeOffer.first
-            val peer = tradeOffer.second
-
-            lifecycleScope.launch(Dispatchers.Main) {
-                val alertDialogBuilder = AlertDialog.Builder(this@AtomicSwapActivity)
-                alertDialogBuilder.setTitle("Received Trade Offer")
-                alertDialogBuilder.setMessage(trade.toString())
-                alertDialogBuilder.setPositiveButton("Accept") { _, _ ->
-
-                    trade.status = TradeOfferStatus.IN_PROGRESS
-                    updateTradeOffersAdapter()
-                    val newTrade = trade.copy()
-                    model.trades.add(newTrade)
-
-                    newTrade.setOnTrade()
-                    val myPubKey = newTrade.myPubKey ?: error("Some fields are not initialized")
-                    val myAddress = newTrade.myAddress ?: error("Some fields are not initialized")
-                    atomicSwapCommunity.sendAcceptMessage(
-                        peer,
-                        trade.id.toString(),
-                        myPubKey.toHex(),
-                        myAddress
-                    )
-                    Log.d(LOG, "Bob accepted a trade offer from Alice")
-                    Log.d(LOG, "SENDING ACCEPT TO PEER ${peer.mid}")
-                }
-
-                alertDialogBuilder.setCancelable(true)
-                alertDialogBuilder.show()
-            }
+        try {
+            model.acceptTrade(tradeOfferItem.id)
+            updateTradeOffersAdapter()
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
