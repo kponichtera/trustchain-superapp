@@ -70,58 +70,89 @@ class AtomicSwapActivity : BaseActivity() {
 
         // BOB RECEIVES A TRADE OFFER AND ACCEPTS IT
         atomicSwapCommunity.setOnTrade { trade, peer ->
-            model.receivedTradeMessage(trade, peer)
-            updateTradeOffersAdapter()
+            try {
+                model.receivedTradeMessage(trade, peer)
+                updateTradeOffersAdapter()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
 
         // ALICE RECEIVES AN ACCEPT AND CREATES A TRANSACTION THAT CAN BE CLAIMED BY BOB
         atomicSwapCommunity.setOnAccept { accept, peer ->
-            model.receivedAcceptMessage(accept, peer)
-            updateTradeOffersAdapter()
+            try {
+                model.receivedAcceptMessage(accept, peer)
+                updateTradeOffersAdapter()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
 
         WalletHolder.swapTransactionConfidenceListener.setOnTransactionConfirmed { entry ->
-            model.transactionInitiatorConfirmed(entry)
+            try {
+                model.transactionInitiatorConfirmed(entry)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
 
 
         // BOB GETS NOTIFIED WHEN ALICE FINISHES HER TRANSACTION AND CREATES HIS OWN TRANSACTION
         atomicSwapCommunity.setOnInitiate { initiateMessage, peer ->
-            model.receivedInitiateMessage(initiateMessage, peer)
+            try {
+                model.receivedInitiateMessage(initiateMessage, peer)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
 
         WalletHolder.swapTransactionConfidenceListener.setOnTransactionRecipientConfirmed { entry ->
-            model.transactionRecipientConfirmed(entry)
-            updateTradeOffersAdapter()
+            try {
+                model.transactionRecipientConfirmed(entry)
+                updateTradeOffersAdapter()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
 
 
         // ALICE GETS NOTIFIED THAT BOB'S TRANSACTION IS COMPLETE AND CLAIMS HER MONEY
         atomicSwapCommunity.setOnComplete { completeMessage, peer ->
-            model.receivedCompleteMessage(completeMessage, peer)
-            updateTradeOffersAdapter()
+            try {
+                model.receivedCompleteMessage(completeMessage, peer)
+                updateTradeOffersAdapter()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
 
 
         // BOB GETS NOTIFIED THAT ALICE CLAIMED THE MONEY AND REVEALED THE SECRET -> HE CLAIMS THE MONEY
         WalletHolder.swapTransactionBroadcastListener.setOnSecretRevealed { secret, offerId ->
-            model.secretRevealed(secret, offerId)
-            updateTradeOffersAdapter()
+            try {
+                model.secretRevealed(secret, offerId)
+                updateTradeOffersAdapter()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
 
 
         // END OF SWAP
         WalletHolder.swapTransactionConfidenceListener.setOnClaimedConfirmed {
-            model.claimedTransactionConfirmed(it.offerId)
-            updateTradeOffersAdapter()
+            try {
+                model.claimedTransactionConfirmed(it.offerId)
+                updateTradeOffersAdapter()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
 
         atomicSwapCommunity.setOnRemove { removeMessage, _ ->
             try {
                 val myTrade = model.trades.find { it.id == removeMessage.offerId.toLong() }
                 /* Only remove the trade if you weren't involved in it */
-                if (myTrade == null)
-                {
+                if (myTrade == null) {
                     model.tradeOffers.remove(model.tradeOffers.first { it.first.id == removeMessage.offerId.toLong() })
                     updateTradeOffersAdapter()
                 }
@@ -134,8 +165,7 @@ class AtomicSwapActivity : BaseActivity() {
     /* call this when user accepts trade offer from Trade Offers screen */
     private fun acceptTrade(tradeOfferItem: TradeOfferItem) {
         val tradeOffer = model.tradeOffers.find { it.first.id == tradeOfferItem.id }
-        if (tradeOffer != null)
-        {
+        if (tradeOffer != null) {
             val trade = tradeOffer.first
             val peer = tradeOffer.second
 
