@@ -18,6 +18,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import nl.tudelft.ipv8.util.sha256
 import nl.tudelft.ipv8.util.toHex
+import nl.tudelft.trustchain.atomicswap.BuildConfig
 import nl.tudelft.trustchain.atomicswap.R
 import nl.tudelft.trustchain.atomicswap.databinding.FragmentAtomicWalletBinding
 import nl.tudelft.trustchain.atomicswap.swap.WalletHolder
@@ -71,7 +72,7 @@ class WalletFragment : BaseFragment(R.layout.fragment_atomic_wallet), WalletChan
 //                            DefaultGasProvider()
 //                        ).send()
 //                        Log.d("ETHLOG","contract address : ${contract.contractAddress}")
-                        WalletHolder.ethSwap = EthereumSwap(ethereumWallet.web3j, ethereumWallet.credentials,"0x96cdc87d827e5c3294e6ff9ff7122f2ccf576f2a") //todo add address to some env
+                        WalletHolder.ethSwap = EthereumSwap(ethereumWallet.web3j, ethereumWallet.credentials,BuildConfig.ETH_SWAP_CONTRACT,BuildConfig.ETH_CHAIN_ID)
                         break
                     }catch (e: Exception){
                         Log.d("ETHLOG", e.toString())
