@@ -27,6 +27,8 @@ class AtomicSwapViewModel(
     var tradeOffers = mutableListOf<Pair<Trade, Peer>>()
 
     fun receivedTradeMessage(trade: TradeMessage, peer: Peer) {
+        Log.d(LOG, "RECEIVED TRADE OFFER")
+
         Log.i(LOG, "Received new trade offer: " + trade.offerId)
         val newTrade = Trade(
             walletApi,
@@ -41,12 +43,12 @@ class AtomicSwapViewModel(
     }
 
     fun receivedAcceptMessage(accept: AcceptMessage, peer: Peer) {
+        Log.d(LOG, "RECEIVED ACCEPT")
 
         // find trade in list of my trades
         val trade = trades.first { it.id == accept.offerId.toLong() }
         trade.setOnAccept(accept.btcPubKey.hexToBytes(), accept.ethAddress)
 //        Log.d(LOG, "RECEIVED ACCEPT FROM ${peer.mid}")
-        Log.d(LOG, "RECEIVED ACCEPT")
 
         // change status in tradeOffers list
         val tradeOfferItem = tradeOffers.first { it.first.id == trade.id }
@@ -107,6 +109,7 @@ class AtomicSwapViewModel(
     }
 
     fun receivedInitiateMessage(initiateMessage: InitiateMessage, peer: Peer) {
+        Log.d(LOG, "RECEIVED INITIATE")
         Log.d(LOG, "Bob received initiate message from alice.")
 
         // update the trade
@@ -161,9 +164,7 @@ class AtomicSwapViewModel(
         } else if (trade.myCoin == Currency.BTC) {
 
             // create a swap transaction
-            val (transaction, scriptToWatch) = walletApi.bitcoinSwap.createSwapTransaction(
-                trade
-            )
+            val (transaction, scriptToWatch) = walletApi.bitcoinSwap.createSwapTransaction(trade)
 
             // add a listener on transaction
             walletApi.addRecipientEntryToConfidenceListener(
@@ -199,6 +200,7 @@ class AtomicSwapViewModel(
     }
 
     fun receivedCompleteMessage(completeMessage: CompleteSwapMessage, peer: Peer) {
+        Log.d(LOG, "RECEIVED COMPLETE")
         val trade = trades.first { it.id == completeMessage.offerId.toLong() }
 
         if (trade.counterpartyCoin == Currency.ETH) {
@@ -246,6 +248,7 @@ class AtomicSwapViewModel(
     }
 
     fun receivedRemoveMessage(removeMessage: RemoveTradeMessage) {
+        Log.d(LOG, "RECEIVED REMOVE")
         val myTrade = trades.find { it.id == removeMessage.offerId.toLong() }
         /* Only remove the trade if you weren't involved in it */
         if (myTrade == null) {
