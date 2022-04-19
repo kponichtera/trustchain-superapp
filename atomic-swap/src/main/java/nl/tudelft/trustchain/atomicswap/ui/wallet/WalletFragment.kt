@@ -66,12 +66,6 @@ class WalletFragment : BaseFragment(R.layout.fragment_atomic_wallet), WalletChan
                 while (true) {
                     delay(4000)
                     try {
-//                        val contract = AtomicSwapContract.deploy(
-//                            ethereumWallet.web3j,
-//                            RawTransactionManager(ethereumWallet.web3j,ethereumWallet.credentials,1337 ),
-//                            DefaultGasProvider()
-//                        ).send()
-//                        Log.d("ETHLOG","contract address : ${contract.contractAddress}")
                         WalletHolder.ethSwap = EthereumSwap(ethereumWallet.web3j, ethereumWallet.credentials,BuildConfig.ETH_SWAP_CONTRACT,BuildConfig.ETH_CHAIN_ID)
                         break
                     }catch (e: Exception){

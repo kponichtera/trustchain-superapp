@@ -16,7 +16,7 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
 
-        buildConfigField "String", "ETH_SWAP_CONTRACT", "\"0x96cdc87d827e5c3294e6ff9ff7122f2ccf576f2a\""
+        buildConfigField "String", "ETH_SWAP_CONTRACT", "\"0x8790bca86ee29530a17a9bf80bd9e6e3503ff4d1\""
         buildConfigField "Long", "ETH_CHAIN_ID", "1337L"
     }
 
